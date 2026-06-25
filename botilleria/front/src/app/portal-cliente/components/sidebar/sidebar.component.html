@@ -1,0 +1,28 @@
+<nav class="sidebar" [class.sidebar--abierto]="abierto()">
+  <div class="sidebar__header">
+    <span class="sidebar__header-title">Categorías</span>
+    <button class="sidebar__close" (click)="cerrar.emit()" aria-label="Cerrar menú">✕</button>
+  </div>
+
+  <ul class="sidebar__nav">
+    @for (cat of categorias(); track cat.id) {
+      <li class="sidebar__nav-item">
+        <button
+          class="sidebar__nav-btn"
+          [class.sidebar__nav-btn--activo]="categoriaActiva() === cat.id"
+          (click)="onSeleccionar(cat.id)">
+          <span class="sidebar__nav-emoji">{{ cat.emoji }}</span>
+          <span class="sidebar__nav-nombre">{{ cat.nombre }}</span>
+          @if (categoriaActiva() === cat.id) {
+            <span class="sidebar__nav-indicator"></span>
+          }
+        </button>
+      </li>
+    }
+  </ul>
+
+  <div class="sidebar__footer">
+    <p class="sidebar__footer-text">Precios incluyen IVA</p>
+    <p class="sidebar__footer-legal">Prohibida la venta de alcohol a menores de 18 años</p>
+  </div>
+</nav>

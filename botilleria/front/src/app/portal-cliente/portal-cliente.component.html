@@ -1,0 +1,31 @@
+<div class="portal-layout">
+  <app-header
+    (toggleSidebar)="sidebarAbierto.set(!sidebarAbierto())"
+    (toggleCarrito)="carritoAbierto.set(!carritoAbierto())">
+  </app-header>
+
+  <div class="portal-body">
+    <app-sidebar
+      [abierto]="sidebarAbierto()"
+      [categoriaActiva]="categoriaSeleccionada()"
+      (seleccionarCategoria)="seleccionarCategoria($event)"
+      (cerrar)="sidebarAbierto.set(false)">
+    </app-sidebar>
+
+    <main class="portal-main">
+      <app-productos [categoria]="categoriaSeleccionada()"></app-productos>
+    </main>
+  </div>
+
+  <app-carrito
+    [abierto]="carritoAbierto()"
+    (cerrar)="carritoAbierto.set(false)">
+  </app-carrito>
+
+  @if (sidebarAbierto()) {
+    <div class="overlay overlay--sidebar" (click)="sidebarAbierto.set(false)"></div>
+  }
+  @if (carritoAbierto()) {
+    <div class="overlay overlay--carrito" (click)="carritoAbierto.set(false)"></div>
+  }
+</div>

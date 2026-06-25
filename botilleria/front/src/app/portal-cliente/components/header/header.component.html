@@ -1,0 +1,30 @@
+<header class="header">
+  <button class="header__menu" (click)="toggleSidebar.emit()" aria-label="Abrir menú">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <div class="header__brand">
+    <img class="header__brand-logo" src="assets/img/logo-4vasos-negro.png" alt="Botillería" />
+    <div class="header__brand-text">
+      <span class="header__brand-name">Botillería</span>
+      <span class="header__brand-tagline">Premium</span>
+    </div>
+  </div>
+
+  <div class="header__spacer"></div>
+
+  <button class="header__cart" (click)="toggleCarrito.emit()" aria-label="Ver carrito de compras">
+    <div class="header__cart-icon-wrap">
+      <span class="header__cart-icon">🛒</span>
+      @if (carritoService.totalItems() > 0) {
+        <span class="header__cart-badge">{{ carritoService.totalItems() }}</span>
+      }
+    </div>
+    <div class="header__cart-info">
+      <span class="header__cart-label">Mi carrito</span>
+      <span class="header__cart-total">{{ formatearPrecio(carritoService.totalPrecio()) }}</span>
+    </div>
+  </button>
+</header>

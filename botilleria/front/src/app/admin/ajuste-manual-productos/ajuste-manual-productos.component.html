@@ -1,0 +1,363 @@
+<div class="admin-productos">
+  <header class="admin-productos__header">
+    <div class="admin-productos__info">
+      <h1 class="admin-productos__titulo">Gestión de productos</h1>
+      <p class="admin-productos__subtitulo">Crea, edita y elimina productos del catálogo</p>
+      @if (seleccionados().size > 0) {
+        <button
+          class="admin-productos__btn-eliminar"
+          (click)="abrirConfirmarEliminacion()"
+          aria-label="Eliminar productos seleccionados">
+          🗑️
+        </button>
+      }
+    </div>
+    <div class="admin-productos__acciones-header">
+      <button class="btn btn--primary" (click)="abrirFormularioNuevo()">+ Nuevo producto</button>
+      <button class="btn btn--secundario" (click)="abrirImportador()">⇪ Actualizar global</button>
+      <button class="btn btn--secundario" (click)="descargarExcel()">⇩ Descargar data</button>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="admin-productos__alerta">{{ error() }}</div>
+  }
+
+  @if (cargando()) {
+    <div class="admin-productos__estado">Cargando productos...</div>
+  } @else if (productos().length === 0) {
+    <div class="admin-productos__estado">No hay productos registrados todavía.</div>
+  } @else {
+    <div class="admin-productos__tabla-wrap">
+      <table class="admin-tabla">
+        <thead>
+          <tr>
+            <th></th>
+            <th></th>
+            <th>Producto</th>
+            <th>Categoría</th>
+            <th>Precio</th>
+            <th>Stock</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (producto of productos(); track producto.id) {
+            <tr [class.admin-tabla__fila--seleccionada]="estaSeleccionado(producto.id)">
+              <td>
+                <input
+                  type="checkbox"
+                  class="admin-tabla__checkbox"
+                  [checked]="estaSeleccionado(producto.id)"
+                  (change)="toggleSeleccion(producto.id)"
+                  [attr.aria-label]="'Seleccionar ' + producto.nombre" />
+              </td>
+              <td>
+                <div class="admin-tabla__preview" [style.background]="producto.imagen ? 'none' : producto.colorFondo">
+                  @if (producto.imagen) {
+                    <img [src]="urlImagenProducto(producto.imagen)" [alt]="producto.nombre" />
+                  } @else {
+                    <span>{{ producto.emoji }}</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <p class="admin-tabla__nombre">{{ producto.nombre }}</p>
+                <p class="admin-tabla__marca">{{ producto.marca }} · {{ producto.volumen }}</p>
+              </td>
+              <td><span class="admin-tabla__badge">{{ producto.categoria }}</span></td>
+              <td>
+                <span class="admin-tabla__precio">{{ formatearPrecio(producto.precio) }}</span>
+                @if (producto.precioOriginal) {
+                  <br />
+                  <small class="admin-tabla__tachado">{{ formatearPrecio(producto.precioOriginal) }}</small>
+                }
+              </td>
+              <td>{{ producto.stock }}</td>
+              <td class="admin-tabla__acciones">
+                <button class="btn btn--secundario" (click)="abrirFormularioEditar(producto)">Editar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (formAbierto()) {
+    <div class="admin-modal-overlay" (click)="cerrarFormulario()">
+      <div class="admin-modal" (click)="$event.stopPropagation()">
+        <div class="admin-modal__header">
+          <h2>{{ idEditando() ? 'Editar producto' : 'Nuevo producto' }}</h2>
+          <button class="admin-modal__close" (click)="cerrarFormulario()" aria-label="Cerrar">✕</button>
+        </div>
+
+        <form class="admin-form" [formGroup]="form" (ngSubmit)="guardar()">
+          <div class="admin-form__grid">
+            <label class="admin-form__campo">
+              <span>Nombre *</span>
+              <input type="text" formControlName="nombre" placeholder="Ej: Casillero del Diablo" />
+            </label>
+
+            <label class="admin-form__campo">
+              <span>Marca *</span>
+              <input type="text" formControlName="marca" placeholder="Ej: Concha y Toro" />
+            </label>
+
+            <label class="admin-form__campo">
+              <span>Categoría *</span>
+              <select formControlName="categoria">
+                <option value="" disabled>Selecciona una categoría</option>
+                @for (cat of categorias(); track cat.id) {
+                  <option [value]="cat.id">{{ cat.emoji }} {{ cat.nombre }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="admin-form__campo">
+              <span>Precio (CLP) *</span>
+              <input type="number" formControlName="precio" min="0" inputmode="numeric" />
+              @if (errorDeCampo('precio')) {
+                <small class="admin-form__error">{{ errorDeCampo('precio') }}</small>
+              }
+            </label>
+
+            <label class="admin-form__campo">
+              <span>Precio oferta (opcional)</span>
+              <input type="number" formControlName="precioOriginal" min="0" inputmode="numeric" />
+              @if (errorDeCampo('precioOriginal')) {
+                <small class="admin-form__error">{{ errorDeCampo('precioOriginal') }}</small>
+              }
+            </label>
+
+            <label class="admin-form__campo">
+              <span>Grados de alcohol *</span>
+              <input type="number" formControlName="grados" min="0" step="0.1" inputmode="decimal" />
+              @if (errorDeCampo('grados')) {
+                <small class="admin-form__error">{{ errorDeCampo('grados') }}</small>
+              }
+            </label>
+
+            <label class="admin-form__campo">
+              <span>Volumen *</span>
+              <input type="text" formControlName="volumen" placeholder="Ej: 750ml" />
+            </label>
+
+            <label class="admin-form__campo">
+              <span>Stock *</span>
+              <input type="number" formControlName="stock" min="0" inputmode="numeric" />
+              @if (errorDeCampo('stock')) {
+                <small class="admin-form__error">{{ errorDeCampo('stock') }}</small>
+              }
+            </label>
+
+            <label class="admin-form__campo">
+              <span>Emoji *</span>
+              <input type="text" formControlName="emoji" maxlength="4" />
+            </label>
+
+            <label class="admin-form__campo admin-form__campo--ancho">
+              <span>Color de fondo (CSS) *</span>
+              <input type="text" formControlName="colorFondo" placeholder="linear-gradient(...)" />
+            </label>
+
+            <label class="admin-form__campo admin-form__campo--ancho">
+              <span>Descripción *</span>
+              <textarea formControlName="descripcion" rows="3"></textarea>
+            </label>
+          </div>
+
+          <div class="admin-form__preview">
+            <span>Vista previa:</span>
+            <div class="admin-form__preview-card" [style.background]="form.value.colorFondo">
+              <span>{{ form.value.emoji }}</span>
+            </div>
+          </div>
+
+          <div class="admin-form__acciones">
+            <button type="button" class="btn btn--secundario" (click)="cerrarFormulario()">Cancelar</button>
+            <button type="submit" class="btn btn--primary" [disabled]="guardando()">
+              {{ guardando() ? 'Guardando...' : (idEditando() ? 'Guardar cambios' : 'Crear producto') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (importAbierto()) {
+    <div class="admin-modal-overlay" (click)="cerrarImportador()">
+      <div class="admin-modal" (click)="$event.stopPropagation()">
+        <div class="admin-modal__header">
+          <h2>Actualización global por Excel</h2>
+          <button class="admin-modal__close" (click)="cerrarImportador()" aria-label="Cerrar">✕</button>
+        </div>
+
+        <div class="admin-import">
+          <p class="admin-import__ayuda">
+            Sube un Excel con el mismo formato del archivo de <strong>Descargar data</strong>.
+            Campos obligatorios en cada fila: <strong>ID, Nombre, Marca, Categoría, Precio y Stock</strong>.
+            Si el <strong>ID</strong> ya existe en el catálogo, se actualiza ese producto; si no existe, se crea uno nuevo.
+            El resto de las columnas son opcionales: al actualizar se conservan tal cual estaban si las dejas vacías,
+            y al crear se completan con valores por defecto.
+          </p>
+
+          @if (error()) {
+            <div class="admin-productos__alerta">{{ error() }}</div>
+          }
+
+          <div
+            class="admin-import__dropzone"
+            [class.admin-import__dropzone--activo]="arrastrando()"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave()"
+            (drop)="onDrop($event)"
+            (click)="inputArchivo.click()">
+            <span class="admin-import__icono">📄</span>
+            <p>Arrastra el archivo Excel aquí</p>
+            <small>o haz clic para seleccionarlo (.xlsx, .xls)</small>
+            <input
+              #inputArchivo
+              type="file"
+              accept=".xlsx,.xls"
+              hidden
+              (change)="onSeleccionarArchivo($event)" />
+          </div>
+
+          @if (importando()) {
+            <p class="admin-import__estado">Procesando archivo...</p>
+          }
+
+          @if (pendientesPrecio().length > 0) {
+            <div class="admin-import__alerta-precio">
+              <div class="admin-import__alerta-precio-header">
+                <p>
+                  ⚠️ {{ pendientesPrecio().length }} producto(s) bajarían su precio en 50% o más.
+                  Confirma cada cambio antes de aplicarlo:
+                </p>
+                <button class="btn btn--primary" (click)="aceptarTodosPendientes()">✅ Aceptar todos</button>
+              </div>
+
+              <div class="admin-import__alerta-precio-lista">
+                @for (item of pendientesPrecio(); track item.fila) {
+                  <div class="admin-import__alerta-precio-item">
+                    <div>
+                      <p class="admin-import__alerta-precio-nombre">{{ item.nombre }} (ID {{ item.id }})</p>
+                      <p class="admin-import__alerta-precio-detalle">
+                        {{ formatearPrecio(item.alertaPrecio!.precioAnterior) }}
+                        → {{ formatearPrecio(item.alertaPrecio!.precioNuevo) }}
+                        <strong>(-{{ item.alertaPrecio!.porcentaje }}%)</strong>
+                      </p>
+                    </div>
+                    <div class="admin-import__alerta-precio-acciones">
+                      <button
+                        class="btn btn--secundario"
+                        [disabled]="estaResolviendo(item.fila)"
+                        (click)="cancelarCambioPendiente(item)">
+                        Cancelar
+                      </button>
+                      <button
+                        class="btn btn--primary"
+                        [disabled]="estaResolviendo(item.fila)"
+                        (click)="aceptarCambioPendiente(item)">
+                        {{ estaResolviendo(item.fila) ? 'Aplicando...' : 'Aceptar' }}
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          @if (resultadoImport()) {
+            <div class="admin-import__resultado">
+              <p class="admin-import__resumen">
+                @if (resultadoImport()!.creados === 0 && resultadoImport()!.actualizados === 0 && resultadoImport()!.pendientes === 0) {
+                  ➖ No se realizaron cambios ({{ resultadoImport()!.sinCambios }} producto(s) ya estaban al día)
+                } @else {
+                  ✅ {{ resultadoImport()!.creados }} creado(s) · ✏️ {{ resultadoImport()!.actualizados }} actualizado(s)
+                  @if (resultadoImport()!.pendientes > 0) {
+                    · ⚠️ {{ resultadoImport()!.pendientes }} pendiente(s) de confirmación
+                  }
+                  @if (resultadoImport()!.sinCambios > 0) {
+                    · ➖ {{ resultadoImport()!.sinCambios }} sin cambios
+                  }
+                }
+              </p>
+
+              @if (detalleAplicado().length > 0) {
+                <div class="admin-import__detalle">
+                  @for (item of detalleAplicado(); track item.fila) {
+                    <div class="admin-import__detalle-item">
+                      @if (item.accion === 'creado') {
+                        <p class="admin-import__detalle-titulo">
+                          🆕 <strong>{{ item.nombre }}</strong> (ID {{ item.id }}) — producto creado
+                        </p>
+                      } @else if (item.cambios.length > 0) {
+                        <p class="admin-import__detalle-titulo">
+                          ✏️ <strong>{{ item.nombre }}</strong> (ID {{ item.id }}) — actualizado
+                        </p>
+                        <ul class="admin-import__cambios">
+                          @for (c of item.cambios; track c.campo) {
+                            <li><strong>{{ c.campo }}:</strong> {{ c.anterior }} → {{ c.nuevo }}</li>
+                          }
+                        </ul>
+                      } @else {
+                        <p class="admin-import__detalle-titulo admin-import__detalle-titulo--sin-cambios">
+                          ➖ <strong>{{ item.nombre }}</strong> (ID {{ item.id }}) — sin cambios
+                        </p>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+
+              @if (resultadoImport()!.errores.length > 0) {
+                <div class="admin-import__errores">
+                  <p>⚠️ {{ resultadoImport()!.errores.length }} fila(s) con errores:</p>
+                  <ul>
+                    @for (err of resultadoImport()!.errores; track err.fila) {
+                      <li>Fila {{ err.fila }}: {{ err.mensaje }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (confirmarEliminacionAbierto()) {
+    <div class="admin-modal-overlay" (click)="cerrarConfirmarEliminacion()">
+      <div class="admin-modal admin-modal--pequeno" (click)="$event.stopPropagation()">
+        <div class="admin-modal__header">
+          <h2>Eliminar productos</h2>
+          <button class="admin-modal__close" (click)="cerrarConfirmarEliminacion()" aria-label="Cerrar">✕</button>
+        </div>
+
+        <div class="admin-confirmar">
+          <p>
+            ¿Seguro que quieres eliminar {{ seleccionados().size }} producto(s)?
+            Esta acción no se puede deshacer.
+          </p>
+          <div class="admin-confirmar__acciones">
+            <button
+              class="btn btn--secundario"
+              [disabled]="eliminandoSeleccionados()"
+              (click)="cerrarConfirmarEliminacion()">
+              Cancelar
+            </button>
+            <button
+              class="btn btn--peligro"
+              [disabled]="eliminandoSeleccionados()"
+              (click)="confirmarEliminacionMultiple()">
+              {{ eliminandoSeleccionados() ? 'Eliminando...' : 'Aceptar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

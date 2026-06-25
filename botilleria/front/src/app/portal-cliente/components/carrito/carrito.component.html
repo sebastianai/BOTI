@@ -1,0 +1,93 @@
+<aside class="carrito" [class.carrito--abierto]="abierto()" role="dialog" aria-label="Carrito de compras">
+  <div class="carrito__header">
+    <div class="carrito__header-left">
+      <span class="carrito__icon">🛒</span>
+      <div>
+        <h2 class="carrito__titulo">Mi carrito</h2>
+        <span class="carrito__subtitulo">{{ carritoService.totalItems() }} producto(s)</span>
+      </div>
+    </div>
+    <button class="carrito__close" (click)="cerrar.emit()" aria-label="Cerrar carrito">✕</button>
+  </div>
+
+  @if (carritoService.items().length === 0) {
+    <div class="carrito__vacio">
+      <span class="carrito__vacio-emoji">🛒</span>
+      <p class="carrito__vacio-titulo">Tu carrito está vacío</p>
+      <p class="carrito__vacio-texto">Agrega productos para comenzar tu pedido</p>
+      <button class="carrito__vacio-btn" (click)="cerrar.emit()">Ver productos</button>
+    </div>
+  } @else {
+    <div class="carrito__items">
+      @for (item of carritoService.items(); track item.producto.id) {
+        <div class="carrito-item">
+          <div class="carrito-item__imagen" [style.background]="item.producto.imagen ? 'none' : item.producto.colorFondo">
+            @if (item.producto.imagen) {
+              <img [src]="urlImagenProducto(item.producto.imagen)" [alt]="item.producto.nombre" />
+            } @else {
+              <span>{{ item.producto.emoji }}</span>
+            }
+          </div>
+
+          <div class="carrito-item__info">
+            <p class="carrito-item__nombre">{{ item.producto.nombre }}</p>
+            <p class="carrito-item__marca">{{ item.producto.marca }} · {{ item.producto.volumen }}</p>
+            <p class="carrito-item__precio-unit">
+              {{ formatearPrecio(item.producto.precio) }} c/u
+            </p>
+          </div>
+
+          <div class="carrito-item__acciones">
+            <p class="carrito-item__subtotal">
+              {{ formatearPrecio(item.producto.precio * item.cantidad) }}
+            </p>
+
+            <div class="carrito-item__qty">
+              <button
+                class="carrito-item__qty-btn"
+                (click)="cambiarCantidad(item, -1)"
+                aria-label="Reducir cantidad">−</button>
+              <span class="carrito-item__qty-num">{{ item.cantidad }}</span>
+              <button
+                class="carrito-item__qty-btn"
+                (click)="cambiarCantidad(item, 1)"
+                aria-label="Aumentar cantidad">+</button>
+            </div>
+
+            <button
+              class="carrito-item__remove"
+              (click)="remover(item.producto.id)"
+              aria-label="Eliminar producto">
+              🗑️
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="carrito__footer">
+      <div class="carrito__resumen">
+        <div class="carrito__resumen-row">
+          <span>Subtotal ({{ carritoService.totalItems() }} items)</span>
+          <span>{{ formatearPrecio(carritoService.totalPrecio()) }}</span>
+        </div>
+        <div class="carrito__resumen-row carrito__resumen-row--envio">
+          <span>Envío</span>
+          <span class="carrito__envio-gratis">Gratis</span>
+        </div>
+        <div class="carrito__resumen-row carrito__resumen-row--total">
+          <span>Total</span>
+          <span>{{ formatearPrecio(carritoService.totalPrecio()) }}</span>
+        </div>
+      </div>
+
+      <button class="carrito__checkout-btn">
+        Ir a pagar → {{ formatearPrecio(carritoService.totalPrecio()) }}
+      </button>
+
+      <button class="carrito__vaciar-btn" (click)="vaciar()">
+        Vaciar carrito
+      </button>
+    </div>
+  }
+</aside>

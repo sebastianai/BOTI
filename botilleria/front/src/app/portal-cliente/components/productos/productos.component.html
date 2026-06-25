@@ -1,0 +1,97 @@
+<section class="productos">
+  <div class="productos__toolbar">
+    <div class="productos__titulo-wrap">
+      <h2 class="productos__titulo">
+        {{ categoria() === 'Todos' ? 'Todos los productos' : categoria() }}
+      </h2>
+      <span class="productos__count">{{ productosFiltrados().length }} productos</span>
+    </div>
+    <div class="productos__search">
+      <span class="productos__search-icon">🔍</span>
+      <input
+        type="text"
+        class="productos__search-input"
+        placeholder="Buscar productos..."
+        [value]="busqueda()"
+        (input)="onBuscar($event)"
+        aria-label="Buscar productos"
+      />
+    </div>
+  </div>
+
+  @if (cargando()) {
+    <div class="productos__vacio">
+      <span>⏳</span>
+      <p>Cargando productos...</p>
+    </div>
+  } @else if (error()) {
+    <div class="productos__vacio">
+      <span>⚠️</span>
+      <p>No pudimos conectar con el servidor</p>
+      <small>Verifica que el backend esté corriendo en el puerto 3000</small>
+    </div>
+  } @else if (productosFiltrados().length === 0) {
+    <div class="productos__vacio">
+      <span>🔍</span>
+      <p>No encontramos productos con "{{ busqueda() }}"</p>
+      <small>Intenta con otro término de búsqueda</small>
+    </div>
+  } @else {
+    <div class="productos__grid">
+      @for (producto of productosFiltrados(); track producto.id) {
+        <article class="producto-card" [class.producto-card--agregado]="estaAgregado(producto.id)">
+          <div class="producto-card__imagen" [style.background]="producto.imagen ? 'none' : producto.colorFondo">
+            @if (producto.imagen) {
+              <img class="producto-card__foto" [src]="urlImagenProducto(producto.imagen)" [alt]="producto.nombre" />
+            } @else {
+              <span class="producto-card__emoji">{{ producto.emoji }}</span>
+            }
+            @if (producto.precioOriginal) {
+              <span class="producto-card__oferta-badge">OFERTA</span>
+            }
+          </div>
+
+          <div class="producto-card__body">
+            <div class="producto-card__meta">
+              <span class="producto-card__categoria">{{ producto.categoria }}</span>
+              @if (producto.grados > 0) {
+                <span class="producto-card__grados">{{ producto.grados }}°</span>
+              }
+            </div>
+
+            <h3 class="producto-card__nombre">{{ producto.nombre }}</h3>
+            <p class="producto-card__marca">{{ producto.marca }}</p>
+            <p class="producto-card__descripcion">{{ producto.descripcion }}</p>
+
+            <div class="producto-card__volumen">
+              <span>📦 {{ producto.volumen }}</span>
+            </div>
+
+            <div class="producto-card__footer">
+              <div class="producto-card__precios">
+                @if (producto.precioOriginal) {
+                  <span class="producto-card__precio-original">
+                    {{ formatearPrecio(producto.precioOriginal) }}
+                  </span>
+                }
+                <span class="producto-card__precio">{{ formatearPrecio(producto.precio) }}</span>
+              </div>
+
+              <button
+                class="producto-card__btn"
+                [class.producto-card__btn--agregado]="estaAgregado(producto.id)"
+                (click)="agregarAlCarrito(producto)"
+                [disabled]="estaAgregado(producto.id)">
+                @if (estaAgregado(producto.id)) {
+                  <span>✓ Agregado</span>
+                } @else {
+                  <span>+ Agregar</span>
+                }
+              </button>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>
