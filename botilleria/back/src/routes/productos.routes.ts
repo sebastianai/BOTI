@@ -23,7 +23,8 @@ const COLUMNAS_EXCEL: Partial<ExcelJS.Column>[] = [
   { header: 'Emoji', key: 'emoji', width: 8 },
   { header: 'ColorFondo', key: 'colorFondo', width: 48 },
   { header: 'Descripcion', key: 'descripcion', width: 55 },
-  { header: 'TopVentas', key: 'topVentas', width: 10 }
+  { header: 'TopVentas', key: 'topVentas', width: 10 },
+  { header: 'Promocion', key: 'promocion', width: 12 }
 ];
 
 const COL_IMAGEN_INDEX = COLUMNAS_EXCEL.findIndex(c => c.key === 'imagen');
@@ -102,7 +103,8 @@ productosRouter.get('/exportar/excel', async (req, res) => {
         emoji: p.emoji,
         colorFondo: p.colorFondo,
         descripcion: p.descripcion,
-        topVentas: p.topVentas ? 'SI' : 'NO'
+        topVentas: p.topVentas ? 'SI' : 'NO',
+        promocion: p.promocion ?? ''
       });
 
       if (p.imagen) {
@@ -143,7 +145,8 @@ const ETIQUETAS_CAMPO: Record<string, string> = {
   topVentas: 'Top Ventas',
   emoji: 'Emoji',
   colorFondo: 'Color de fondo',
-  descripcion: 'Descripción'
+  descripcion: 'Descripción',
+  promocion: 'Promoción'
 };
 
 function esVacio(valor: any): boolean {
@@ -242,7 +245,8 @@ productosRouter.post('/importar/excel', authMiddleware, upload.single('archivo')
         emoji: obtenerValor(row, 'Emoji'),
         colorFondo: obtenerValor(row, 'ColorFondo'),
         descripcion: obtenerValor(row, 'Descripcion'),
-        topVentas: obtenerValor(row, 'TopVentas')
+        topVentas: obtenerValor(row, 'TopVentas'),
+        promocion: obtenerValor(row, 'Promocion')
       };
 
       const filaVacia = Object.values(fila).every(esVacio);
@@ -364,7 +368,12 @@ productosRouter.post('/importar/excel', authMiddleware, upload.single('archivo')
           ? String(fila.topVentas).trim().toUpperCase() === 'SI'
           : existente
             ? Boolean(existente['topVentas'])
-            : false
+            : false,
+        promocion: !esVacio(fila.promocion)
+          ? String(fila.promocion).trim().toLowerCase() || null
+          : existente
+            ? (existente['promocion'] as string | null | undefined) ?? null
+            : null
       };
 
       try {
@@ -405,11 +414,11 @@ productosRouter.post('/importar/excel', authMiddleware, upload.single('archivo')
               });
             } else {
               await pool.query(
-                `UPDATE productos SET nombre=$1, marca=$2, precio=$3, precio_original=$4, categoria=$5, descripcion=$6, grados=$7, volumen=$8, emoji=$9, color_fondo=$10, stock=$11, imagen=$12, top_ventas=$13
-                 WHERE id=$14`,
+                `UPDATE productos SET nombre=$1, marca=$2, precio=$3, precio_original=$4, categoria=$5, descripcion=$6, grados=$7, volumen=$8, emoji=$9, color_fondo=$10, stock=$11, imagen=$12, top_ventas=$13, promocion=$14
+                 WHERE id=$15`,
                 [nuevoProducto.nombre, nuevoProducto.marca, nuevoProducto.precio, nuevoProducto.precioOriginal, nuevoProducto.categoria,
                  nuevoProducto.descripcion, nuevoProducto.grados, nuevoProducto.volumen, nuevoProducto.emoji, nuevoProducto.colorFondo,
-                 nuevoProducto.stock, nuevoProducto.imagen ?? null, nuevoProducto.topVentas, idDefinitivo]
+                 nuevoProducto.stock, nuevoProducto.imagen ?? null, nuevoProducto.topVentas, nuevoProducto.promocion, idDefinitivo]
               );
               actualizados++;
               detalle.push({ fila: rowNumber, id: idDefinitivo, nombre: nuevoProducto.nombre, accion: 'actualizado', cambios });
@@ -417,11 +426,11 @@ productosRouter.post('/importar/excel', authMiddleware, upload.single('archivo')
           }
         } else {
           await pool.query(
-            `INSERT INTO productos (id, nombre, marca, precio, precio_original, categoria, descripcion, grados, volumen, emoji, color_fondo, stock, imagen, top_ventas)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+            `INSERT INTO productos (id, nombre, marca, precio, precio_original, categoria, descripcion, grados, volumen, emoji, color_fondo, stock, imagen, top_ventas, promocion)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
             [idDefinitivo, nuevoProducto.nombre, nuevoProducto.marca, nuevoProducto.precio, nuevoProducto.precioOriginal,
              nuevoProducto.categoria, nuevoProducto.descripcion, nuevoProducto.grados, nuevoProducto.volumen,
-             nuevoProducto.emoji, nuevoProducto.colorFondo, nuevoProducto.stock, nuevoProducto.imagen ?? null, nuevoProducto.topVentas]
+             nuevoProducto.emoji, nuevoProducto.colorFondo, nuevoProducto.stock, nuevoProducto.imagen ?? null, nuevoProducto.topVentas, nuevoProducto.promocion ?? null]
           );
           creados++;
           huboCreacionManual = true;
