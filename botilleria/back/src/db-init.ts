@@ -144,28 +144,6 @@ export async function initDb(): Promise<void> {
     );
     console.log('✅ Usuario admin creado');
   }
-
-  // Seed test products with promotions
-  const prodExiste2x1 = await pool.query(
-    `SELECT id FROM productos WHERE promocion = '2x1' LIMIT 1`
-  );
-  const prodExiste3x2 = await pool.query(
-    `SELECT id FROM productos WHERE promocion = '3x2' LIMIT 1`
-  );
-
-  if (prodExiste2x1.rowCount === 0) {
-    await pool.query(
-      `UPDATE productos SET promocion = '2x1' WHERE id = 1`
-    );
-    console.log('✅ Producto con promoción 2x1 configurado');
-  }
-
-  if (prodExiste3x2.rowCount === 0) {
-    await pool.query(
-      `UPDATE productos SET promocion = '3x2' WHERE id = 2`
-    );
-    console.log('✅ Producto con promoción 3x2 configurado');
-  }
 }
 
 // ─── Helper: seed pedidos de prueba ──────────────────────────────────────────
