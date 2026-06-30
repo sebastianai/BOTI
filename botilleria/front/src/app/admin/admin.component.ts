@@ -1,10 +1,15 @@
-import { Component } from '@angular/core';
-import { AjusteManualProductosComponent } from './ajuste-manual-productos/ajuste-manual-productos.component';
+import { Component, signal } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { AdminHeaderComponent } from './components/header/admin-header.component';
+import { AdminSidebarComponent } from './components/sidebar/admin-sidebar.component';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [AjusteManualProductosComponent],
-  template: `<app-ajuste-manual-productos />`
+  imports: [RouterOutlet, AdminHeaderComponent, AdminSidebarComponent],
+  templateUrl: './admin.component.html',
+  styleUrl: './admin.component.scss'
 })
-export class AdminComponent {}
+export class AdminComponent {
+  protected readonly sidebarAbierto = signal(false);
+}

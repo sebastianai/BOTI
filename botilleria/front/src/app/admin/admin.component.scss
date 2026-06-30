@@ -1,0 +1,15 @@
+.admin-layout {
+  display: flex;
+  padding-top: var(--admin-header-h);
+  min-height: 100vh;
+
+  &__main {
+    flex: 1;
+    min-width: 0;
+    padding-left: var(--admin-sidebar-w);
+
+    @media (max-width: 1023px) {
+      padding-left: 0;
+    }
+  }
+}

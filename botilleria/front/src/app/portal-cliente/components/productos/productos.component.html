@@ -19,22 +19,31 @@
     </div>
   </div>
 
+  <div class="productos__filtros">
+    <select class="productos__select" [value]="orden()" (change)="onOrden($event)" aria-label="Ordenar">
+      <option value="default">Ordenar: Relevante</option>
+      <option value="precio-asc">Precio: Menor a Mayor</option>
+      <option value="precio-desc">Precio: Mayor a Menor</option>
+    </select>
+    <button
+      class="productos__filtro-btn"
+      [class.productos__filtro-btn--activo]="soloOfertas()"
+      (click)="soloOfertas.set(!soloOfertas())">
+      🏷️ Solo Ofertas
+    </button>
+  </div>
+
   @if (cargando()) {
-    <div class="productos__vacio">
-      <span>⏳</span>
-      <p>Cargando productos...</p>
-    </div>
+    <app-vasos-loading mensaje="Cargando productos..." />
   } @else if (error()) {
-    <div class="productos__vacio">
-      <span>⚠️</span>
-      <p>No pudimos conectar con el servidor</p>
-      <small>Verifica que el backend esté corriendo en el puerto 3000</small>
-    </div>
+    <app-vasos-loading mensaje="No pudimos conectar con el servidor. Verifica que el backend esté corriendo." />
   } @else if (productosFiltrados().length === 0) {
-    <div class="productos__vacio">
-      <span>🔍</span>
-      <p>No encontramos productos con "{{ busqueda() }}"</p>
-      <small>Intenta con otro término de búsqueda</small>
+    <div class="productos__sin-resultados">
+      <app-vasos-loading mensaje="" />
+      <p class="productos__sin-resultados-texto">
+        No encontramos productos con <strong>"{{ busqueda() }}"</strong>
+      </p>
+      <small class="productos__sin-resultados-sub">Intenta con otro término de búsqueda</small>
     </div>
   } @else {
     <div class="productos__grid">

@@ -1,0 +1,18 @@
+<aside class="admin-sidebar" [class.admin-sidebar--abierto]="abierto()">
+  <div class="admin-sidebar__overlay" (click)="cerrar.emit()"></div>
+
+  <nav class="admin-sidebar__nav">
+    <p class="admin-sidebar__seccion">Gestión</p>
+    @for (item of navItems; track item.ruta) {
+      <a
+        class="admin-sidebar__link"
+        [routerLink]="item.ruta"
+        routerLinkActive="admin-sidebar__link--activo"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="cerrar.emit()">
+        <span class="admin-sidebar__link-icon">{{ item.icon }}</span>
+        <span>{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+</aside>

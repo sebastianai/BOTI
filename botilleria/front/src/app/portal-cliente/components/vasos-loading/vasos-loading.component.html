@@ -1,0 +1,10 @@
+<div class="vasos-loading">
+  <div class="vasos-row">
+    @for (v of vasos; track $index; let i = $index) {
+      <img [src]="dark() ? v.oscuro : v.claro" [style.--i]="i" alt="" />
+    }
+  </div>
+  @if (mensaje()) {
+    <p class="vasos-loading__mensaje">{{ mensaje() }}</p>
+  }
+</div>

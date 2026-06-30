@@ -1,0 +1,38 @@
+@if (productos() && productos().length > 0) {
+  <section class="top-ventas">
+    <div class="top-ventas__header">
+      <h2 class="top-ventas__titulo">⭐ Top Ventas</h2>
+      <span class="top-ventas__sub">Los favoritos de nuestros clientes</span>
+    </div>
+    <div class="top-ventas__scroll">
+      @for (p of productos(); track p.id) {
+        <article class="tv-card" [class.tv-card--agregado]="estaAgregado(p.id)">
+          <div class="tv-card__imagen" [style.background]="p.imagen ? 'none' : p.colorFondo">
+            @if (p.imagen) {
+              <img [src]="urlImagen(p.imagen)" [alt]="p.nombre" class="tv-card__foto" />
+            } @else {
+              <span class="tv-card__emoji">{{ p.emoji }}</span>
+            }
+            @if (p.precioOriginal) {
+              <span class="tv-card__oferta">OFERTA</span>
+            }
+          </div>
+          <div class="tv-card__body">
+            <p class="tv-card__nombre">{{ p.nombre }}</p>
+            <p class="tv-card__marca">{{ p.marca }}</p>
+            <div class="tv-card__footer">
+              <span class="tv-card__precio">{{ formatearPrecio(p.precio) }}</span>
+              <button
+                class="tv-card__btn"
+                [class.tv-card__btn--agregado]="estaAgregado(p.id)"
+                (click)="agregar(p)"
+                [disabled]="estaAgregado(p.id)">
+                {{ estaAgregado(p.id) ? '✓' : '+' }}
+              </button>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+}

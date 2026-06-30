@@ -1,0 +1,11 @@
+<app-admin-header (toggleSidebar)="sidebarAbierto.set(!sidebarAbierto())" />
+
+<div class="admin-layout">
+  <app-admin-sidebar
+    [abierto]="sidebarAbierto()"
+    (cerrar)="sidebarAbierto.set(false)" />
+
+  <main class="admin-layout__main">
+    <router-outlet />
+  </main>
+</div>

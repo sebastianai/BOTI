@@ -1,0 +1,141 @@
+.admin-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--admin-header-h);
+  z-index: 50;
+  background: var(--c-primary);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+
+  &__inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    max-width: var(--header-max-w);
+    margin: 0 auto;
+  }
+
+  &__menu {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    transition: background 0.2s;
+
+    span {
+      display: block;
+      width: 20px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 2px;
+    }
+
+    &:hover { background: rgba(255, 255, 255, 0.1); }
+
+    @media (min-width: 1024px) { display: none; }
+  }
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+
+    &-logo {
+      height: 52px;
+      width: auto;
+      object-fit: contain;
+      filter: brightness(0) invert(1);
+    }
+
+    &-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    &-name {
+      color: #fff;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    &-tag {
+      color: var(--c-accent);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+  }
+
+  &__spacer { flex: 1; }
+
+  &__user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    @media (max-width: 479px) { display: none; }
+
+    &-info {
+      display: flex;
+      flex-direction: column;
+      text-align: right;
+    }
+
+    &-nombre {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    &-rol {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: capitalize;
+    }
+  }
+
+  &__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--c-accent);
+    color: var(--c-primary-dark);
+    font-size: 15px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__logout {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.7);
+    transition: var(--transition);
+    flex-shrink: 0;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+  }
+}

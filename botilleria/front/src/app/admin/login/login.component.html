@@ -1,0 +1,49 @@
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-card__logo">
+      <img src="assets/img/logo-4vasos-negro.png" alt="Botillería" />
+    </div>
+    <h1 class="login-card__titulo">Panel de Administración</h1>
+    <p class="login-card__subtitulo">Ingresa tus credenciales para continuar</p>
+
+    @if (errorMsg()) {
+      <div class="login-card__error">{{ errorMsg() }}</div>
+    }
+
+    <form class="login-form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="login-form__campo">
+        <label for="usuario">Usuario</label>
+        <input
+          id="usuario"
+          type="text"
+          formControlName="usuario"
+          placeholder="admin"
+          autocomplete="username" />
+        @if (form.get('usuario')?.touched && form.get('usuario')?.invalid) {
+          <span class="login-form__error">Campo requerido</span>
+        }
+      </div>
+
+      <div class="login-form__campo">
+        <label for="contrasena">Contraseña</label>
+        <input
+          id="contrasena"
+          type="password"
+          formControlName="contrasena"
+          placeholder="••••••••"
+          autocomplete="current-password" />
+        @if (form.get('contrasena')?.touched && form.get('contrasena')?.invalid) {
+          <span class="login-form__error">Campo requerido</span>
+        }
+      </div>
+
+      <button class="login-form__btn" type="submit" [disabled]="cargando()">
+        @if (cargando()) {
+          <span>Ingresando...</span>
+        } @else {
+          <span>Ingresar</span>
+        }
+      </button>
+    </form>
+  </div>
+</div>

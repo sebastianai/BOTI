@@ -24,7 +24,7 @@
   }
 
   @if (cargando()) {
-    <div class="admin-productos__estado">Cargando productos...</div>
+    <app-vasos-loading mensaje="Cargando productos..." />
   } @else if (productos().length === 0) {
     <div class="admin-productos__estado">No hay productos registrados todavía.</div>
   } @else {
@@ -38,6 +38,7 @@
             <th>Categoría</th>
             <th>Precio</th>
             <th>Stock</th>
+            <th>⭐</th>
             <th></th>
           </tr>
         </thead>
@@ -74,6 +75,15 @@
                 }
               </td>
               <td>{{ producto.stock }}</td>
+              <td>
+                <button
+                  class="admin-tabla__top-btn"
+                  [class.admin-tabla__top-btn--activo]="producto.topVentas"
+                  (click)="toggleTopVentas(producto)"
+                  [title]="producto.topVentas ? 'Quitar de Top Ventas' : 'Agregar a Top Ventas'">
+                  {{ producto.topVentas ? '⭐' : '☆' }}
+                </button>
+              </td>
               <td class="admin-tabla__acciones">
                 <button class="btn btn--secundario" (click)="abrirFormularioEditar(producto)">Editar</button>
               </td>
@@ -164,6 +174,21 @@
             <label class="admin-form__campo admin-form__campo--ancho">
               <span>Descripción *</span>
               <textarea formControlName="descripcion" rows="3"></textarea>
+            </label>
+
+            <label class="admin-form__campo admin-form__campo--check">
+              <input type="checkbox" formControlName="topVentas" />
+              <span>⭐ Top Ventas</span>
+            </label>
+
+            <label class="admin-form__campo">
+              <span>Promoción (opcional)</span>
+              <select formControlName="promocion">
+                <option [value]="null">Sin promoción</option>
+                <option value="oferta">🏷️ Oferta (descuento)</option>
+                <option value="2x1">🎁 2x1 (2 por el precio de 1)</option>
+                <option value="3x2">🎁 3x2 (3 por el precio de 2)</option>
+              </select>
             </label>
           </div>
 

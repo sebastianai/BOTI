@@ -1,0 +1,291 @@
+<div class="ped-admin">
+
+  <!-- Header -->
+  <header class="ped-admin__header">
+    <div>
+      <h1 class="ped-admin__titulo">Pedidos</h1>
+      <p class="ped-admin__subtitulo">{{ pedidos().length }} pedidos en total</p>
+    </div>
+    <button class="btn btn--secundario" (click)="cargar()">↻ Actualizar</button>
+  </header>
+
+  @if (errorMsg()) {
+    <div class="ped-admin__alerta">{{ errorMsg() }}</div>
+  }
+
+  <!-- Stats -->
+  <div class="ped-stats">
+    <button class="ped-stats__card ped-stats__card--pendiente"
+      [class.ped-stats__card--activo]="filtroEstado() === 'pendiente'"
+      (click)="filtroEstado.set(filtroEstado() === 'pendiente' ? 'todos' : 'pendiente')">
+      <span class="ped-stats__num">{{ conteoEstados().pendiente }}</span>
+      <span class="ped-stats__label">Pendientes</span>
+    </button>
+    <button class="ped-stats__card ped-stats__card--confirmado"
+      [class.ped-stats__card--activo]="filtroEstado() === 'confirmado'"
+      (click)="filtroEstado.set(filtroEstado() === 'confirmado' ? 'todos' : 'confirmado')">
+      <span class="ped-stats__num">{{ conteoEstados().confirmado }}</span>
+      <span class="ped-stats__label">Confirmados</span>
+    </button>
+    <button class="ped-stats__card ped-stats__card--en_camino"
+      [class.ped-stats__card--activo]="filtroEstado() === 'en_camino'"
+      (click)="filtroEstado.set(filtroEstado() === 'en_camino' ? 'todos' : 'en_camino')">
+      <span class="ped-stats__num">{{ conteoEstados().en_camino }}</span>
+      <span class="ped-stats__label">En camino</span>
+    </button>
+    <button class="ped-stats__card ped-stats__card--entregado"
+      [class.ped-stats__card--activo]="filtroEstado() === 'entregado'"
+      (click)="filtroEstado.set(filtroEstado() === 'entregado' ? 'todos' : 'entregado')">
+      <span class="ped-stats__num">{{ conteoEstados().entregado }}</span>
+      <span class="ped-stats__label">Entregados</span>
+    </button>
+    <button class="ped-stats__card ped-stats__card--cancelado"
+      [class.ped-stats__card--activo]="filtroEstado() === 'cancelado'"
+      (click)="filtroEstado.set(filtroEstado() === 'cancelado' ? 'todos' : 'cancelado')">
+      <span class="ped-stats__num">{{ conteoEstados().cancelado }}</span>
+      <span class="ped-stats__label">Cancelados</span>
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="ped-admin__filtros">
+    <input class="ped-admin__busqueda" type="search" placeholder="Buscar por nombre, N° pedido o teléfono…"
+      [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)" />
+    @if (filtroEstado() !== 'todos') {
+      <button class="btn btn--secundario" (click)="filtroEstado.set('todos')">✕ Limpiar filtro</button>
+    }
+  </div>
+
+  <!-- Tabla -->
+  @if (cargando()) {
+    <div class="ped-admin__estado">Cargando pedidos…</div>
+  } @else if (pedidosFiltrados().length === 0) {
+    <div class="ped-admin__estado">No hay pedidos que coincidan.</div>
+  } @else {
+    <div class="ped-tabla-wrap">
+      <table class="ped-tabla">
+        <thead>
+          <tr>
+            <th>N° Pedido</th>
+            <th>Cliente</th>
+            <th>Fecha</th>
+            <th>Items</th>
+            <th>Total</th>
+            <th>Pago</th>
+            <th>Canal</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of pedidosFiltrados(); track p.id) {
+            <tr>
+              <td class="ped-tabla__num">{{ p.numero_pedido || '#' + p.id }}</td>
+              <td>
+                <span class="ped-tabla__nombre">{{ p.nombre_cliente }}</span>
+                @if (p.telefono_cliente) {
+                  <span class="ped-tabla__sub">{{ p.telefono_cliente }}</span>
+                }
+              </td>
+              <td class="ped-tabla__fecha">{{ fecha(p.fecha_pedido, true) }}</td>
+              <td class="ped-tabla__centro">{{ p.total_items }}</td>
+              <td class="ped-tabla__total">{{ clp(p.total) }}</td>
+              <td class="ped-tabla__sub">{{ labelPago(p.medio_pago) }}</td>
+              <td class="ped-tabla__sub">{{ labelCanal(p.canal) }}</td>
+              <td>
+                <span class="ped-badge ped-badge--{{ p.estado }}">
+                  {{ p.estado === 'en_camino' ? 'En camino' : p.estado | titlecase }}
+                </span>
+              </td>
+              <td>
+                <button class="btn btn--secundario btn--sm" (click)="verDetalle(p)">Ver</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Modal detalle -->
+@if (detalle()) {
+  <div class="ped-overlay" (click)="cerrarDetalle()">
+    <div class="ped-modal" (click)="$event.stopPropagation()">
+
+      <div class="ped-modal__header">
+        <div class="ped-modal__header-left">
+          <span class="ped-modal__num">{{ detalle()!.numero_pedido || '#' + detalle()!.id }}</span>
+          <span class="ped-badge ped-badge--{{ detalle()!.estado }}">
+            {{ detalle()!.estado === 'en_camino' ? 'En camino' : detalle()!.estado | titlecase }}
+          </span>
+        </div>
+        <button class="ped-modal__close" (click)="cerrarDetalle()">✕</button>
+      </div>
+
+      @if (cargandoDet()) {
+        <div class="ped-modal__loading">Cargando detalle…</div>
+      } @else {
+        <div class="ped-modal__body">
+
+          <!-- Cliente -->
+          <section class="ped-seccion">
+            <h3 class="ped-seccion__titulo">👤 Datos del cliente</h3>
+            <div class="ped-grid">
+              <div class="ped-dato">
+                <span class="ped-dato__label">Nombre</span>
+                <span>{{ detalle()!.nombre_cliente }}</span>
+              </div>
+              @if (detalle()!.rut_cliente) {
+                <div class="ped-dato">
+                  <span class="ped-dato__label">RUT</span>
+                  <span>{{ detalle()!.rut_cliente }}</span>
+                </div>
+              }
+              @if (detalle()!.telefono_cliente) {
+                <div class="ped-dato">
+                  <span class="ped-dato__label">Teléfono</span>
+                  <span>{{ detalle()!.telefono_cliente }}</span>
+                </div>
+              }
+              @if (detalle()!.email_cliente) {
+                <div class="ped-dato">
+                  <span class="ped-dato__label">Email</span>
+                  <span>{{ detalle()!.email_cliente }}</span>
+                </div>
+              }
+              @if (detalle()!.direccion_cliente) {
+                <div class="ped-dato ped-dato--ancho">
+                  <span class="ped-dato__label">Dirección</span>
+                  <span>{{ detalle()!.direccion_cliente }}</span>
+                </div>
+              }
+              @if (detalle()!.notas) {
+                <div class="ped-dato ped-dato--ancho">
+                  <span class="ped-dato__label">Nota del cliente</span>
+                  <span class="ped-dato--nota">{{ detalle()!.notas }}</span>
+                </div>
+              }
+            </div>
+          </section>
+
+          <!-- Resumen -->
+          <section class="ped-seccion">
+            <h3 class="ped-seccion__titulo">🧾 Resumen del pedido</h3>
+            <div class="ped-grid">
+              <div class="ped-dato">
+                <span class="ped-dato__label">Subtotal</span>
+                <span>{{ clp(detalle()!.subtotal) }}</span>
+              </div>
+              <div class="ped-dato">
+                <span class="ped-dato__label">Costo envío</span>
+                <span>{{ clp(detalle()!.costo_envio) }}</span>
+              </div>
+              <div class="ped-dato ped-dato--total">
+                <span class="ped-dato__label">Total</span>
+                <span>{{ clp(detalle()!.total) }}</span>
+              </div>
+              <div class="ped-dato">
+                <span class="ped-dato__label">Medio de pago</span>
+                <span>{{ labelPago(detalle()!.medio_pago) }}</span>
+              </div>
+              <div class="ped-dato">
+                <span class="ped-dato__label">Canal</span>
+                <span>{{ labelCanal(detalle()!.canal) }}</span>
+              </div>
+              <div class="ped-dato">
+                <span class="ped-dato__label">Fecha pedido</span>
+                <span>{{ fecha(detalle()!.fecha_pedido, true) }}</span>
+              </div>
+              @if (detalle()!.fecha_confirmacion) {
+                <div class="ped-dato">
+                  <span class="ped-dato__label">Confirmado</span>
+                  <span>{{ fecha(detalle()!.fecha_confirmacion, true) }}</span>
+                </div>
+              }
+              @if (detalle()!.fecha_entrega_estimada) {
+                <div class="ped-dato">
+                  <span class="ped-dato__label">Entrega estimada</span>
+                  <span>{{ fecha(detalle()!.fecha_entrega_estimada) }}</span>
+                </div>
+              }
+              @if (detalle()!.fecha_entrega_real) {
+                <div class="ped-dato">
+                  <span class="ped-dato__label">Entregado</span>
+                  <span>{{ fecha(detalle()!.fecha_entrega_real, true) }}</span>
+                </div>
+              }
+            </div>
+          </section>
+
+          <!-- Items -->
+          @if (detalle()!.items && detalle()!.items!.length > 0) {
+            <section class="ped-seccion">
+              <h3 class="ped-seccion__titulo">🛒 Productos</h3>
+              <table class="ped-items-tabla">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th class="ped-items-tabla__num">Cant.</th>
+                    <th class="ped-items-tabla__num">Precio unit.</th>
+                    <th class="ped-items-tabla__num">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of detalle()!.items; track item.id) {
+                    <tr>
+                      <td>
+                        <span class="ped-tabla__nombre">{{ item.nombre_producto }}</span>
+                        @if (item.categoria) {
+                          <span class="ped-tabla__sub">{{ item.categoria }}</span>
+                        }
+                      </td>
+                      <td class="ped-items-tabla__num">{{ item.cantidad }}</td>
+                      <td class="ped-items-tabla__num">{{ clp(item.precio_unitario) }}</td>
+                      <td class="ped-items-tabla__num ped-tabla__total">{{ clp(item.subtotal) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </section>
+          }
+
+          <!-- Cambiar estado -->
+          <section class="ped-seccion">
+            <h3 class="ped-seccion__titulo">🔄 Cambiar estado</h3>
+            <div class="ped-estados">
+              @for (e of estadosAccion; track e.valor) {
+                <button
+                  class="ped-estado-btn"
+                  [class.ped-estado-btn--activo]="detalle()!.estado === e.valor"
+                  [class.ped-estado-btn--{{ e.valor }}]="true"
+                  [disabled]="guardandoEst() || detalle()!.estado === e.valor"
+                  (click)="cambiarEstado(e.valor)">
+                  {{ e.emoji }} {{ e.label }}
+                </button>
+              }
+            </div>
+          </section>
+
+          <!-- Notas internas -->
+          <section class="ped-seccion">
+            <h3 class="ped-seccion__titulo">📝 Notas internas</h3>
+            <textarea
+              class="ped-notas"
+              rows="3"
+              placeholder="Notas solo visibles para el equipo…"
+              [ngModel]="notasInt()"
+              (ngModelChange)="notasInt.set($event)">
+            </textarea>
+            <div style="display:flex; justify-content:flex-end; margin-top:8px">
+              <button class="btn btn--primary btn--sm" (click)="guardarNotas()" [disabled]="guardandoNot()">
+                {{ guardandoNot() ? 'Guardando…' : 'Guardar notas' }}
+              </button>
+            </div>
+          </section>
+
+        </div>
+      }
+    </div>
+  </div>
+}

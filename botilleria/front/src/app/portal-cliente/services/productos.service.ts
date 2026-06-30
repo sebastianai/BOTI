@@ -44,14 +44,11 @@ export interface ResultadoImportacion {
 export class ProductosService {
   private readonly http = inject(HttpClient);
 
-  obtenerProductos(categoria: string, busqueda: string): Observable<Producto[]> {
+  obtenerProductos(categoria: string, busqueda: string, soloTopVentas = false): Observable<Producto[]> {
     let params = new HttpParams();
-    if (categoria && categoria !== 'Todos') {
-      params = params.set('categoria', categoria);
-    }
-    if (busqueda) {
-      params = params.set('busqueda', busqueda);
-    }
+    if (categoria && categoria !== 'Todos') params = params.set('categoria', categoria);
+    if (busqueda) params = params.set('busqueda', busqueda);
+    if (soloTopVentas) params = params.set('top_ventas', 'true');
     return this.http.get<Producto[]>(`${API_URL}/productos`, { params });
   }
 

@@ -1,0 +1,22 @@
+@if (mapaUrl()) {
+  <section class="mapa-local">
+    <div class="mapa-local__header">
+      <span class="mapa-local__icono">📍</span>
+      <div>
+        <h2 class="mapa-local__titulo">¿Dónde estamos?</h2>
+        @if (portalConfig.config().direccion) {
+          <p class="mapa-local__direccion">{{ portalConfig.config().direccion }}</p>
+        }
+      </div>
+    </div>
+    <div class="mapa-local__wrap">
+      <iframe
+        [src]="mapaUrl()!"
+        class="mapa-local__iframe"
+        allowfullscreen
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+    </div>
+  </section>
+}

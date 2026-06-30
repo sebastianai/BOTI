@@ -1,5 +1,6 @@
 import { Component, inject, output } from '@angular/core';
 import { CarritoService } from '../../services/carrito.service';
+import { PortalConfigService } from '../../../core/portal-config.service';
 
 @Component({
   selector: 'app-header',
@@ -9,6 +10,7 @@ import { CarritoService } from '../../services/carrito.service';
 })
 export class HeaderComponent {
   protected readonly carritoService = inject(CarritoService);
+  protected readonly portalConfig = inject(PortalConfigService);
 
   readonly toggleSidebar = output<void>();
   readonly toggleCarrito = output<void>();

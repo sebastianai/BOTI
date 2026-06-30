@@ -19,6 +19,30 @@ export class CarritoComponent {
     return '$' + precio.toLocaleString('es-CL');
   }
 
+  protected calcularSubtotal(item: ItemCarrito): number {
+    const { producto, cantidad } = item;
+    const precio = producto.precio;
+
+    if (producto.promocion === '2x1') {
+      const cantidadCobrada = Math.ceil(cantidad / 2);
+      return cantidadCobrada * precio;
+    } else if (producto.promocion === '3x2') {
+      const cantidadCobrada = Math.ceil((cantidad * 2) / 3);
+      return cantidadCobrada * precio;
+    } else if (producto.precioOriginal) {
+      return cantidad * precio;
+    } else {
+      return cantidad * precio;
+    }
+  }
+
+  protected obtenerLabelPromocion(promocion: string | null | undefined): string {
+    if (promocion === '2x1') return '🎁 2x1';
+    if (promocion === '3x2') return '🎁 3x2';
+    if (promocion === 'oferta') return '🏷️ Oferta';
+    return '';
+  }
+
   protected cambiarCantidad(item: ItemCarrito, delta: number): void {
     this.carritoService.actualizarCantidad(item.producto.id, item.cantidad + delta);
   }

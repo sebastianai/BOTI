@@ -4,6 +4,11 @@ import express from 'express';
 import cors from 'cors';
 import { productosRouter } from './routes/productos.routes';
 import { categoriasRouter } from './routes/categorias.routes';
+import { authRouter } from './routes/auth.routes';
+import { portalConfigRouter } from './routes/portal-config.routes';
+import { publicidadRouter } from './routes/publicidad.routes';
+import { pedidosRouter } from './routes/pedidos.routes';
+import { initDb } from './db-init';
 
 export const app = express();
 
@@ -12,5 +17,11 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+app.use('/api/auth', authRouter);
+app.use('/api/portal-config', portalConfigRouter);
+app.use('/api/publicidad', publicidadRouter);
+app.use('/api/pedidos', pedidosRouter);
 app.use('/api/productos', productosRouter);
 app.use('/api/categorias', categoriasRouter);
+
+initDb().catch(err => console.error('Error al inicializar la base de datos:', err));

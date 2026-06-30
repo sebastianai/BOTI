@@ -1,0 +1,44 @@
+.vasos-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 20px;
+}
+
+.vasos-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 26px;
+
+  img {
+    width: 64px;
+    height: 64px;
+    animation:
+      vaso-pop .55s cubic-bezier(.34, 1.56, .64, 1) both,
+      vaso-hop 2s ease-in-out infinite;
+    animation-delay:
+      calc(var(--i) * .1s),
+      calc(.9s + var(--i) * .12s);
+  }
+}
+
+.vasos-loading__mensaje {
+  font-size: 15px;
+  color: var(--c-text-muted);
+  font-weight: 500;
+  text-align: center;
+}
+
+@keyframes vaso-pop {
+  from { opacity: 0; transform: translateY(40px) scale(.5); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+@keyframes vaso-hop {
+  0%, 100% { transform: translateY(0); }
+  8%        { transform: translateY(-22px); }
+  16%       { transform: translateY(0); }
+}

@@ -1,0 +1,131 @@
+<div class="ajustes">
+  <header class="ajustes__header">
+    <div>
+      <h1 class="ajustes__titulo">Ajustes Generales</h1>
+      <p class="ajustes__subtitulo">Personaliza el nombre, logo y datos de tu negocio</p>
+    </div>
+  </header>
+
+  @if (mensajeExito()) {
+    <div class="ajustes__banner ajustes__banner--exito">{{ mensajeExito() }}</div>
+  }
+  @if (errorMsg()) {
+    <div class="ajustes__banner ajustes__banner--error">{{ errorMsg() }}</div>
+  }
+
+  <div class="ajustes__grid">
+
+    <!-- Logo -->
+    <section class="ajustes__card">
+      <h2 class="ajustes__card-titulo">Logo del negocio</h2>
+      <p class="ajustes__card-desc">Se muestra en el header del portal de clientes. PNG, JPG, SVG o WEBP.</p>
+
+      <div class="ajustes__logo-actual">
+        <img
+          [src]="logoPreview() ?? portalConfig.logoUrl(portalConfig.config().logo_url)"
+          alt="Logo actual"
+          class="ajustes__logo-img" />
+        <span class="ajustes__logo-label">Logo actual</span>
+      </div>
+
+      <label
+        class="ajustes__dropzone"
+        [class.ajustes__dropzone--activo]="arrastrando()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave()"
+        (drop)="onDrop($event)">
+        <input type="file" accept="image/*" (change)="onSeleccionarLogo($event)" hidden />
+        @if (subiendoLogo()) {
+          <span class="ajustes__dropzone-icon">⏳</span>
+          <p>Subiendo logo...</p>
+        } @else {
+          <span class="ajustes__dropzone-icon">🖼️</span>
+          <p>Arrastra una imagen o <strong>haz clic para seleccionar</strong></p>
+          <small>Recomendado: fondo transparente, mínimo 200px de alto</small>
+        }
+      </label>
+    </section>
+
+    <!-- Datos generales -->
+    <section class="ajustes__card">
+      <h2 class="ajustes__card-titulo">Datos del header</h2>
+
+      <form class="ajustes__form" [formGroup]="form" (ngSubmit)="guardar()">
+        <div class="ajustes__form-grid">
+
+          <div class="ajustes__campo">
+            <label>Nombre del negocio</label>
+            <input type="text" formControlName="nombre_negocio" placeholder="Ej: Botillería Don Juan" />
+            @if (form.get('nombre_negocio')?.touched && form.get('nombre_negocio')?.invalid) {
+              <span class="ajustes__campo-error">Campo requerido</span>
+            }
+          </div>
+
+          <div class="ajustes__campo">
+            <label>Slogan / Tagline</label>
+            <input type="text" formControlName="tagline" placeholder="Ej: Premium" />
+            @if (form.get('tagline')?.touched && form.get('tagline')?.invalid) {
+              <span class="ajustes__campo-error">Campo requerido</span>
+            }
+          </div>
+
+          <div class="ajustes__campo ajustes__campo--ancho">
+            <label>Descripción del negocio</label>
+            <textarea formControlName="descripcion" placeholder="Breve descripción para el portal..." rows="3"></textarea>
+          </div>
+
+          <div class="ajustes__campo">
+            <label>Teléfono</label>
+            <input type="text" formControlName="telefono" placeholder="+56 9 1234 5678" />
+          </div>
+
+          <div class="ajustes__campo">
+            <label>Email de contacto</label>
+            <input type="email" formControlName="email" placeholder="contacto@negocio.cl" />
+          </div>
+
+          <div class="ajustes__campo ajustes__campo--ancho">
+            <label>Dirección</label>
+            <input type="text" formControlName="direccion" placeholder="Av. Ejemplo 123, Santiago" />
+          </div>
+
+          <div class="ajustes__campo ajustes__campo--ancho">
+            <label>URL de Google Maps (embed)</label>
+            <input type="text" formControlName="mapa_url" placeholder="Pega aquí el src del iframe de Google Maps" />
+            <small style="color: var(--c-text-muted); font-size: 12px; font-weight: 400;">
+              En Google Maps → Compartir → Insertar mapa → copia solo el valor del atributo <code>src</code>.
+            </small>
+          </div>
+
+        </div>
+
+        <h2 class="ajustes__card-titulo" style="margin-top: 24px">Colores</h2>
+        <p class="ajustes__card-desc" style="margin-bottom: 16px">Los cambios de color se verán reflejados en el próximo ciclo de estilos.</p>
+
+        <div class="ajustes__colores">
+          <div class="ajustes__color-campo">
+            <label>Color primario</label>
+            <div class="ajustes__color-wrap">
+              <input type="color" formControlName="color_primario" />
+              <input type="text" formControlName="color_primario" placeholder="#1c3829" maxlength="7" />
+            </div>
+          </div>
+          <div class="ajustes__color-campo">
+            <label>Color acento</label>
+            <div class="ajustes__color-wrap">
+              <input type="color" formControlName="color_acento" />
+              <input type="text" formControlName="color_acento" placeholder="#c9a227" maxlength="7" />
+            </div>
+          </div>
+        </div>
+
+        <div class="ajustes__acciones">
+          <button type="submit" class="btn btn--primary" [disabled]="guardando()">
+            {{ guardando() ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+  </div>
+</div>

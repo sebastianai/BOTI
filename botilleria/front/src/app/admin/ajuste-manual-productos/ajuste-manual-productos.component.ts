@@ -16,6 +16,7 @@ import {
 import { CategoriasService, Categoria } from '../../portal-cliente/services/categorias.service';
 import { Producto } from '../../portal-cliente/models/producto.model';
 import { urlImagenProducto } from '../../core/imagen.util';
+import { VasosLoadingComponent } from '../../portal-cliente/components/vasos-loading/vasos-loading.component';
 
 function soloNumeros(control: AbstractControl): ValidationErrors | null {
   const valor = control.value;
@@ -28,7 +29,7 @@ function soloNumeros(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-ajuste-manual-productos',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, VasosLoadingComponent],
   templateUrl: './ajuste-manual-productos.component.html',
   styleUrl: './ajuste-manual-productos.component.scss'
 })
@@ -71,7 +72,9 @@ export class AjusteManualProductosComponent implements OnInit {
     stock: [0, [Validators.required, soloNumeros, Validators.min(0)]],
     emoji: ['🍷', Validators.required],
     colorFondo: ['linear-gradient(135deg, #4a1040 0%, #8B1A1A 100%)', Validators.required],
-    descripcion: ['', Validators.required]
+    descripcion: ['', Validators.required],
+    topVentas: [false],
+    promocion: [null as string | null]
   });
 
   protected errorDeCampo(campo: string): string {
@@ -120,7 +123,9 @@ export class AjusteManualProductosComponent implements OnInit {
       stock: 0,
       emoji: '🍷',
       colorFondo: 'linear-gradient(135deg, #4a1040 0%, #8B1A1A 100%)',
-      descripcion: ''
+      descripcion: '',
+      topVentas: false,
+      promocion: null
     });
     this.formAbierto.set(true);
   }
@@ -138,7 +143,9 @@ export class AjusteManualProductosComponent implements OnInit {
       stock: producto.stock,
       emoji: producto.emoji,
       colorFondo: producto.colorFondo,
-      descripcion: producto.descripcion
+      descripcion: producto.descripcion,
+      topVentas: producto.topVentas ?? false,
+      promocion: producto.promocion ?? null
     });
     this.formAbierto.set(true);
   }
@@ -166,7 +173,9 @@ export class AjusteManualProductosComponent implements OnInit {
       stock: Number(v.stock),
       emoji: v.emoji,
       colorFondo: v.colorFondo,
-      descripcion: v.descripcion
+      descripcion: v.descripcion,
+      topVentas: !!v.topVentas,
+      promocion: v.promocion ?? null
     };
 
     this.guardando.set(true);
@@ -245,6 +254,19 @@ export class AjusteManualProductosComponent implements OnInit {
 
   protected formatearPrecio(precio: number): string {
     return '$' + precio.toLocaleString('es-CL');
+  }
+
+  protected toggleTopVentas(producto: Producto): void {
+    const payload: Omit<Producto, 'id'> = {
+      nombre: producto.nombre, marca: producto.marca, categoria: producto.categoria,
+      precio: producto.precio, precioOriginal: producto.precioOriginal,
+      grados: producto.grados, volumen: producto.volumen, stock: producto.stock,
+      emoji: producto.emoji, colorFondo: producto.colorFondo, descripcion: producto.descripcion,
+      imagen: producto.imagen, topVentas: !producto.topVentas
+    };
+    this.productosService.actualizarProducto(producto.id, payload).subscribe({
+      next: actualizado => this.productos.update(list => list.map(p => p.id === actualizado.id ? actualizado : p))
+    });
   }
 
   protected abrirImportador(): void {

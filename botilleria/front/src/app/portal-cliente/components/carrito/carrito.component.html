@@ -32,6 +32,9 @@
           <div class="carrito-item__info">
             <p class="carrito-item__nombre">{{ item.producto.nombre }}</p>
             <p class="carrito-item__marca">{{ item.producto.marca }} · {{ item.producto.volumen }}</p>
+            @if (item.producto.promocion) {
+              <p class="carrito-item__promocion">{{ obtenerLabelPromocion(item.producto.promocion) }}</p>
+            }
             <p class="carrito-item__precio-unit">
               {{ formatearPrecio(item.producto.precio) }} c/u
             </p>
@@ -39,7 +42,7 @@
 
           <div class="carrito-item__acciones">
             <p class="carrito-item__subtotal">
-              {{ formatearPrecio(item.producto.precio * item.cantidad) }}
+              {{ formatearPrecio(calcularSubtotal(item)) }}
             </p>
 
             <div class="carrito-item__qty">

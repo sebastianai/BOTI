@@ -12,6 +12,8 @@ export interface Producto {
   colorFondo: string;
   stock: number;
   imagen?: string;
+  topVentas?: boolean;
+  promocion?: string | null;  // 'oferta' | '2x1' | null
 }
 
 export interface ItemCarrito {

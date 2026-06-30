@@ -4,6 +4,7 @@ import multer from 'multer';
 import ExcelJS from 'exceljs';
 import { pool } from '../db';
 import { guardarImagen, eliminarImagenSiExiste, leerImagenDesdeUrl } from '../utils/imagenes';
+import { authMiddleware } from '../middleware/auth.middleware';
 
 export const productosRouter = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -21,7 +22,8 @@ const COLUMNAS_EXCEL: Partial<ExcelJS.Column>[] = [
   { header: 'Imagen', key: 'imagen', width: 14 },
   { header: 'Emoji', key: 'emoji', width: 8 },
   { header: 'ColorFondo', key: 'colorFondo', width: 48 },
-  { header: 'Descripcion', key: 'descripcion', width: 55 }
+  { header: 'Descripcion', key: 'descripcion', width: 55 },
+  { header: 'TopVentas', key: 'topVentas', width: 10 }
 ];
 
 const COL_IMAGEN_INDEX = COLUMNAS_EXCEL.findIndex(c => c.key === 'imagen');
@@ -41,11 +43,13 @@ function mapProducto(row: any) {
     colorFondo: row.color_fondo,
     stock: row.stock,
     imagen: row.imagen ?? undefined,
+    topVentas: row.top_ventas ?? false,
+    promocion: row.promocion ?? null,
   };
 }
 
 productosRouter.get('/', async (req, res) => {
-  const { categoria, busqueda } = req.query;
+  const { categoria, busqueda, top_ventas } = req.query;
   const params: unknown[] = [];
   let query = 'SELECT * FROM productos WHERE 1=1';
 
@@ -56,6 +60,9 @@ productosRouter.get('/', async (req, res) => {
   if (busqueda) {
     params.push(`%${busqueda}%`);
     query += ` AND (nombre ILIKE $${params.length} OR marca ILIKE $${params.length} OR descripcion ILIKE $${params.length})`;
+  }
+  if (top_ventas === 'true') {
+    query += ` AND top_ventas = true`;
   }
   query += ' ORDER BY id';
 
@@ -94,7 +101,8 @@ productosRouter.get('/exportar/excel', async (req, res) => {
         imagen: '',
         emoji: p.emoji,
         colorFondo: p.colorFondo,
-        descripcion: p.descripcion
+        descripcion: p.descripcion,
+        topVentas: p.topVentas ? 'SI' : 'NO'
       });
 
       if (p.imagen) {
@@ -132,6 +140,7 @@ const ETIQUETAS_CAMPO: Record<string, string> = {
   volumen: 'Volumen',
   stock: 'Stock',
   imagen: 'Imagen',
+  topVentas: 'Top Ventas',
   emoji: 'Emoji',
   colorFondo: 'Color de fondo',
   descripcion: 'Descripción'
@@ -161,7 +170,7 @@ const VALOR_DEFECTO = {
   descripcion: 'Sin descripción'
 };
 
-productosRouter.post('/importar/excel', upload.single('archivo'), async (req, res) => {
+productosRouter.post('/importar/excel', authMiddleware, upload.single('archivo'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No se recibió ningún archivo' });
   }
@@ -232,7 +241,8 @@ productosRouter.post('/importar/excel', upload.single('archivo'), async (req, re
         stock: obtenerValor(row, 'Stock'),
         emoji: obtenerValor(row, 'Emoji'),
         colorFondo: obtenerValor(row, 'ColorFondo'),
-        descripcion: obtenerValor(row, 'Descripcion')
+        descripcion: obtenerValor(row, 'Descripcion'),
+        topVentas: obtenerValor(row, 'TopVentas')
       };
 
       const filaVacia = Object.values(fila).every(esVacio);
@@ -349,7 +359,12 @@ productosRouter.post('/importar/excel', upload.single('archivo'), async (req, re
           ? String(fila.descripcion).trim()
           : existente
             ? String(existente['descripcion'])
-            : VALOR_DEFECTO.descripcion
+            : VALOR_DEFECTO.descripcion,
+        topVentas: !esVacio(fila.topVentas)
+          ? String(fila.topVentas).trim().toUpperCase() === 'SI'
+          : existente
+            ? Boolean(existente['topVentas'])
+            : false
       };
 
       try {
@@ -390,11 +405,11 @@ productosRouter.post('/importar/excel', upload.single('archivo'), async (req, re
               });
             } else {
               await pool.query(
-                `UPDATE productos SET nombre=$1, marca=$2, precio=$3, precio_original=$4, categoria=$5, descripcion=$6, grados=$7, volumen=$8, emoji=$9, color_fondo=$10, stock=$11, imagen=$12
-                 WHERE id=$13`,
+                `UPDATE productos SET nombre=$1, marca=$2, precio=$3, precio_original=$4, categoria=$5, descripcion=$6, grados=$7, volumen=$8, emoji=$9, color_fondo=$10, stock=$11, imagen=$12, top_ventas=$13
+                 WHERE id=$14`,
                 [nuevoProducto.nombre, nuevoProducto.marca, nuevoProducto.precio, nuevoProducto.precioOriginal, nuevoProducto.categoria,
                  nuevoProducto.descripcion, nuevoProducto.grados, nuevoProducto.volumen, nuevoProducto.emoji, nuevoProducto.colorFondo,
-                 nuevoProducto.stock, nuevoProducto.imagen ?? null, idDefinitivo]
+                 nuevoProducto.stock, nuevoProducto.imagen ?? null, nuevoProducto.topVentas, idDefinitivo]
               );
               actualizados++;
               detalle.push({ fila: rowNumber, id: idDefinitivo, nombre: nuevoProducto.nombre, accion: 'actualizado', cambios });
@@ -402,11 +417,11 @@ productosRouter.post('/importar/excel', upload.single('archivo'), async (req, re
           }
         } else {
           await pool.query(
-            `INSERT INTO productos (id, nombre, marca, precio, precio_original, categoria, descripcion, grados, volumen, emoji, color_fondo, stock, imagen)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+            `INSERT INTO productos (id, nombre, marca, precio, precio_original, categoria, descripcion, grados, volumen, emoji, color_fondo, stock, imagen, top_ventas)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
             [idDefinitivo, nuevoProducto.nombre, nuevoProducto.marca, nuevoProducto.precio, nuevoProducto.precioOriginal,
              nuevoProducto.categoria, nuevoProducto.descripcion, nuevoProducto.grados, nuevoProducto.volumen,
-             nuevoProducto.emoji, nuevoProducto.colorFondo, nuevoProducto.stock, nuevoProducto.imagen ?? null]
+             nuevoProducto.emoji, nuevoProducto.colorFondo, nuevoProducto.stock, nuevoProducto.imagen ?? null, nuevoProducto.topVentas]
           );
           creados++;
           huboCreacionManual = true;
@@ -466,19 +481,19 @@ function validarPayload(body: any): string | null {
   return null;
 }
 
-productosRouter.post('/', async (req, res) => {
+productosRouter.post('/', authMiddleware, async (req, res) => {
   const errorValidacion = validarPayload(req.body);
   if (errorValidacion) {
     return res.status(400).json({ error: errorValidacion });
   }
 
-  const { nombre, marca, precio, precioOriginal, categoria, descripcion, grados, volumen, emoji, colorFondo, stock } = req.body;
+  const { nombre, marca, precio, precioOriginal, categoria, descripcion, grados, volumen, emoji, colorFondo, stock, topVentas, promocion } = req.body;
 
   try {
     const result = await pool.query(
-      `INSERT INTO productos (nombre, marca, precio, precio_original, categoria, descripcion, grados, volumen, emoji, color_fondo, stock)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-      [nombre, marca, precio, precioOriginal ?? null, categoria, descripcion, grados, volumen, emoji, colorFondo, stock ?? 0]
+      `INSERT INTO productos (nombre, marca, precio, precio_original, categoria, descripcion, grados, volumen, emoji, color_fondo, stock, top_ventas, promocion)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+      [nombre, marca, precio, precioOriginal ?? null, categoria, descripcion, grados, volumen, emoji, colorFondo, stock ?? 0, topVentas ?? false, promocion ?? null]
     );
     res.status(201).json(mapProducto(result.rows[0]));
   } catch (err) {
@@ -487,20 +502,19 @@ productosRouter.post('/', async (req, res) => {
   }
 });
 
-productosRouter.put('/:id', async (req, res) => {
+productosRouter.put('/:id', authMiddleware, async (req, res) => {
   const errorValidacion = validarPayload(req.body);
   if (errorValidacion) {
     return res.status(400).json({ error: errorValidacion });
   }
 
-  const { nombre, marca, precio, precioOriginal, categoria, descripcion, grados, volumen, emoji, colorFondo, stock, imagen } = req.body;
+  const { nombre, marca, precio, precioOriginal, categoria, descripcion, grados, volumen, emoji, colorFondo, stock, imagen, topVentas, promocion } = req.body;
 
   try {
-    // imagen es opcional: si no se envía (caso normal del formulario manual), se conserva la que ya tenía.
     const result = await pool.query(
-      `UPDATE productos SET nombre=$1, marca=$2, precio=$3, precio_original=$4, categoria=$5, descripcion=$6, grados=$7, volumen=$8, emoji=$9, color_fondo=$10, stock=$11, imagen=COALESCE($12, imagen)
-       WHERE id=$13 RETURNING *`,
-      [nombre, marca, precio, precioOriginal ?? null, categoria, descripcion, grados, volumen, emoji, colorFondo, stock ?? 0, imagen ?? null, req.params.id]
+      `UPDATE productos SET nombre=$1, marca=$2, precio=$3, precio_original=$4, categoria=$5, descripcion=$6, grados=$7, volumen=$8, emoji=$9, color_fondo=$10, stock=$11, imagen=COALESCE($12, imagen), top_ventas=$13, promocion=$14
+       WHERE id=$15 RETURNING *`,
+      [nombre, marca, precio, precioOriginal ?? null, categoria, descripcion, grados, volumen, emoji, colorFondo, stock ?? 0, imagen ?? null, topVentas ?? false, promocion ?? null, req.params.id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Producto no encontrado' });
@@ -512,7 +526,7 @@ productosRouter.put('/:id', async (req, res) => {
   }
 });
 
-productosRouter.delete('/:id', async (req, res) => {
+productosRouter.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query('DELETE FROM productos WHERE id = $1 RETURNING id, imagen', [req.params.id]);
     if (result.rows.length === 0) {

@@ -1,0 +1,143 @@
+<div class="pub-admin">
+  <header class="pub-admin__header">
+    <div>
+      <h1 class="pub-admin__titulo">Publicidad</h1>
+      <p class="pub-admin__subtitulo">Gestiona los banners y anuncios del carrusel del portal</p>
+    </div>
+    <button class="btn btn--primary" (click)="abrirNuevo()">+ Nuevo banner</button>
+  </header>
+
+  @if (errorMsg()) {
+    <div class="pub-admin__alerta">{{ errorMsg() }}</div>
+  }
+
+  @if (cargando()) {
+    <div class="pub-admin__estado">Cargando...</div>
+  } @else if (items().length === 0) {
+    <div class="pub-admin__estado">No hay banners. Crea el primero.</div>
+  } @else {
+    <div class="pub-grid">
+      @for (item of items(); track item.id) {
+        <div class="pub-card" [class.pub-card--inactivo]="!item.activo">
+
+          <label
+            class="pub-card__img-zona"
+            [class.pub-card__img-zona--drag]="arrastrando() === item.id"
+            (dragover)="onDragOver($event, item.id)"
+            (dragleave)="onDragLeave()"
+            (drop)="onDrop($event, item.id)">
+            <input type="file" accept="image/*" (change)="onSeleccionarImagen($event, item.id)" hidden />
+            @if (subiendoImagen() === item.id) {
+              <div class="pub-card__img-loading">⏳</div>
+            } @else if (item.imagen_url) {
+              <img [src]="imagenUrl(item.imagen_url)" alt="" class="pub-card__img" />
+              <span class="pub-card__img-hint">Cambiar imagen</span>
+            } @else {
+              <div class="pub-card__img-empty">
+                <span>🖼️</span>
+                <small>Arrastra o haz clic para subir imagen</small>
+              </div>
+            }
+          </label>
+
+          <div class="pub-card__body">
+            <div class="pub-card__meta">
+              <span class="pub-card__orden">Orden {{ item.orden }}</span>
+              <span class="pub-card__formato pub-card__formato--{{ item.formato }}">
+                {{ item.formato === 'escritorio' ? '🖥️ Escritorio' : '📱 Móvil' }}
+              </span>
+              <button
+                class="pub-card__toggle"
+                [class.pub-card__toggle--activo]="item.activo"
+                (click)="toggleActivo(item)"
+                [title]="item.activo ? 'Ocultar del portal' : 'Mostrar en portal'">
+                {{ item.activo ? '✅ Activo' : '⭕ Inactivo' }}
+              </button>
+            </div>
+            <p class="pub-card__titulo">{{ item.titulo || '(Sin título)' }}</p>
+            @if (item.descripcion) {
+              <p class="pub-card__desc">{{ item.descripcion }}</p>
+            }
+            @if (item.enlace) {
+              <a [href]="item.enlace" target="_blank" class="pub-card__enlace">{{ item.enlace }}</a>
+            }
+            <div class="pub-card__acciones">
+              <button class="btn btn--secundario" (click)="abrirEditar(item)">✏️ Editar</button>
+              <button class="btn btn--peligro" (click)="eliminar(item)">🗑️</button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (modalAbierto()) {
+  <div class="pub-modal-overlay" (click)="cerrar()">
+    <div class="pub-modal" (click)="$event.stopPropagation()">
+      <div class="pub-modal__header">
+        <h2>{{ idEditando() ? 'Editar banner' : 'Nuevo banner' }}</h2>
+        <button class="pub-modal__close" (click)="cerrar()">✕</button>
+      </div>
+      <form class="pub-form" [formGroup]="form" (ngSubmit)="guardar()">
+        <div class="pub-form__campo pub-form__campo--ancho">
+          <label>Imagen del banner</label>
+          <label class="pub-form__img-input"
+            [class.pub-form__img-input--preview]="previewImagen() !== null">
+            <input type="file" accept="image/*" (change)="onSeleccionarImagenModal($event)" hidden />
+            @if (previewImagen()) {
+              <img [src]="previewImagen()!" alt="Preview" class="pub-form__img-preview" />
+              <span class="pub-form__img-hint">Cambiar imagen</span>
+            } @else {
+              <div class="pub-form__img-empty">
+                <span>🖼️</span>
+                <p>Haz clic para seleccionar una imagen</p>
+              </div>
+            }
+          </label>
+        </div>
+
+        <div class="pub-form__campo">
+          <label>Título (opcional)</label>
+          <input type="text" formControlName="titulo" placeholder="Ej: Promoción de verano" />
+        </div>
+        <div class="pub-form__campo">
+          <label>Descripción (opcional)</label>
+          <textarea formControlName="descripcion" placeholder="Texto que aparece sobre el banner..." rows="2"></textarea>
+        </div>
+        <div class="pub-form__campo">
+          <label>Enlace (opcional)</label>
+          <input type="url" formControlName="enlace" placeholder="https://..." />
+        </div>
+        <div class="pub-form__grid2">
+          <div class="pub-form__campo">
+            <label>Orden</label>
+            <input type="number" formControlName="orden" min="0" />
+          </div>
+          <div class="pub-form__campo">
+            <label>Formato</label>
+            <select formControlName="formato">
+              <option value="escritorio">🖥️ Escritorio</option>
+              <option value="movil">📱 Móvil</option>
+            </select>
+          </div>
+          <div class="pub-form__campo pub-form__campo--check">
+            <label>
+              <input type="checkbox" formControlName="activo" />
+              Mostrar en portal
+            </label>
+          </div>
+        </div>
+        @if (errorMsg()) {
+          <div class="pub-form__error">{{ errorMsg() }}</div>
+        }
+        <div class="pub-form__acciones">
+          <button type="button" class="btn btn--secundario" (click)="cerrar()">Cancelar</button>
+          <button type="submit" class="btn btn--primary" [disabled]="guardando()">
+            {{ guardando() ? 'Guardando...' : (idEditando() ? 'Guardar cambios' : 'Crear banner') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

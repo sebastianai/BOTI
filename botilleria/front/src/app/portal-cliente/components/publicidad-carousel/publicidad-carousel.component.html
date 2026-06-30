@@ -1,0 +1,39 @@
+@if (items().length > 0) {
+  <div class="carousel">
+    <div class="carousel__track" [style.transform]="'translateX(-' + indice() * 100 + '%)'">
+      @for (item of items(); track item.id) {
+        <div class="carousel__slide">
+          @if (item.imagen_url) {
+            <img [src]="imagenUrl(item.imagen_url)" [alt]="item.titulo ?? 'Publicidad'" class="carousel__img" />
+          } @else {
+            <div class="carousel__placeholder">📢</div>
+          }
+          @if (item.titulo || item.descripcion) {
+            <div class="carousel__overlay">
+              @if (item.titulo) { <h3 class="carousel__titulo">{{ item.titulo }}</h3> }
+              @if (item.descripcion) { <p class="carousel__desc">{{ item.descripcion }}</p> }
+              @if (item.enlace) {
+                <a [href]="item.enlace" target="_blank" rel="noopener" class="carousel__cta">Ver más</a>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    @if (items().length > 1) {
+      <button class="carousel__btn carousel__btn--prev" (click)="anterior()" aria-label="Anterior">‹</button>
+      <button class="carousel__btn carousel__btn--next" (click)="siguiente()" aria-label="Siguiente">›</button>
+      <div class="carousel__dots">
+        @for (item of items(); track item.id; let i = $index) {
+          <button
+            class="carousel__dot"
+            [class.carousel__dot--activo]="i === indice()"
+            (click)="irA(i)"
+            [attr.aria-label]="'Ir a slide ' + (i + 1)">
+          </button>
+        }
+      </div>
+    }
+  </div>
+}

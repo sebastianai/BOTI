@@ -7,7 +7,40 @@ export class CarritoService {
 
   readonly items = this._items.asReadonly();
   readonly totalItems = computed(() => this._items().reduce((acc, i) => acc + i.cantidad, 0));
-  readonly totalPrecio = computed(() => this._items().reduce((acc, i) => acc + i.producto.precio * i.cantidad, 0));
+  readonly totalPrecio = computed(() =>
+    this._items().reduce((acc, i) => acc + this.calcularSubtotal(i), 0)
+  );
+
+  private calcularSubtotal(item: ItemCarrito): number {
+    const { producto, cantidad } = item;
+    const precio = producto.precio;
+
+    if (producto.promocion === '2x1') {
+      // 2x1: every 2 units charged as 1 unit
+      const cantidadCobrada = Math.ceil(cantidad / 2);
+      return cantidadCobrada * precio;
+    } else if (producto.promocion === '3x2') {
+      // 3x2: every 3 units charged as 2 units
+      const cantidadCobrada = Math.ceil((cantidad * 2) / 3);
+      return cantidadCobrada * precio;
+    } else if (producto.precioOriginal) {
+      // Oferta: use the sale price (precio field)
+      return cantidad * precio;
+    } else {
+      // Regular price
+      return cantidad * precio;
+    }
+  }
+
+  calcularPrecioUnidad(producto: Producto): number {
+    if (producto.promocion === '2x1') {
+      return producto.precio / 2;
+    } else if (producto.promocion === '3x2') {
+      return (producto.precio * 2) / 3;
+    } else {
+      return producto.precio;
+    }
+  }
 
   agregar(producto: Producto): void {
     this._items.update(items => {
