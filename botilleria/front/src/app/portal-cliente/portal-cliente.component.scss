@@ -3,20 +3,10 @@
   background: var(--c-bg);
 }
 
-.portal-body {
-  display: flex;
-  margin-top: var(--header-h);
-  min-height: calc(100vh - var(--header-h));
-}
-
 .portal-main {
-  flex: 1;
-  min-width: 0;
+  margin-top: calc(var(--header-h) + 56px);
+  min-height: calc(100vh - var(--header-h) - 56px);
   overflow-x: hidden;
-
-  @media (min-width: 1024px) {
-    margin-left: var(--sidebar-w);
-  }
 }
 
 .overlay {
@@ -25,14 +15,6 @@
   background: rgba(0, 0, 0, 0.5);
   animation: fadeIn 0.2s ease;
   cursor: pointer;
-
-  &--sidebar {
-    z-index: 35;
-
-    @media (min-width: 1024px) {
-      display: none;
-    }
-  }
 
   &--carrito {
     z-index: 55;

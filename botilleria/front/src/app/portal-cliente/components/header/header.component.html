@@ -1,14 +1,9 @@
 <header class="header">
-  <div class="header__inner">
-    <button class="header__menu" (click)="toggleSidebar.emit()" aria-label="Abrir menú">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
-
+  <!-- Nivel 1: Logo, búsqueda, ubicación, login, carrito -->
+  <div class="header__nivel1">
     <div class="header__brand">
       <img
-        class="header__brand-logo"
+        class="header__logo"
         [src]="portalConfig.logoUrl(portalConfig.config().logo_url)"
         [alt]="portalConfig.config().nombre_negocio" />
       <div class="header__brand-text">
@@ -17,19 +12,44 @@
       </div>
     </div>
 
-    <div class="header__spacer"></div>
+    <div class="header__search">
+      <input
+        type="text"
+        class="header__search-input"
+        placeholder="¿qué estás buscando?" />
+      <button class="header__search-btn" aria-label="Buscar">🔍</button>
+    </div>
 
-    <button class="header__cart" (click)="toggleCarrito.emit()" aria-label="Ver carrito de compras">
-      <div class="header__cart-icon-wrap">
+    <div class="header__actions">
+      <button class="header__action header__action--location" aria-label="Ubicación">
+        📍 Las Condes
+      </button>
+      <button class="header__action header__action--login" aria-label="Iniciar sesión">
+        👤 Iniciar sesión
+      </button>
+      <button class="header__cart-btn" (click)="toggleCarrito.emit()" aria-label="Ver carrito">
         <span class="header__cart-icon">🛒</span>
         @if (carritoService.totalItems() > 0) {
           <span class="header__cart-badge">{{ carritoService.totalItems() }}</span>
         }
-      </div>
-      <div class="header__cart-info">
-        <span class="header__cart-label">Mi carrito</span>
-        <span class="header__cart-total">{{ formatearPrecio(carritoService.totalPrecio()) }}</span>
-      </div>
-    </button>
+      </button>
+    </div>
   </div>
+
+  <!-- Nivel 2: Categorías y opciones -->
+  <nav class="header__nivel2">
+    <div class="header__nav-container">
+      @for (cat of categorias(); track cat.id) {
+        <button
+          class="header__nav-item"
+          (click)="onSelectCategoria(cat.id)">
+          {{ cat.emoji }} {{ cat.nombre }}
+        </button>
+      }
+      <button class="header__nav-item">Otros</button>
+      <button class="header__nav-item">Mis pedidos</button>
+      <button class="header__nav-item">Tiendas</button>
+      <button class="header__nav-item">Blog</button>
+    </div>
+  </nav>
 </header>
