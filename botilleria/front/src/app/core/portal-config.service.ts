@@ -58,4 +58,14 @@ export class PortalConfigService {
     if (!logoPath) return 'assets/img/logo-4vasos-negro.png';
     return `${ASSET_BASE_URL}${logoPath}`;
   }
+
+  productoImageUrl(imagenPath: string | null | undefined): string {
+    if (!imagenPath) return '';
+    // Si ya contiene la ruta completa, devolverla con la base URL
+    if (imagenPath.startsWith('/uploads/')) {
+      return `${ASSET_BASE_URL}${imagenPath}`;
+    }
+    // Si es solo el nombre del archivo, agregar la ruta de productos
+    return `${ASSET_BASE_URL}/uploads/productos/${imagenPath}`;
+  }
 }

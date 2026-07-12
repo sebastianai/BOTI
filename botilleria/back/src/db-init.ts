@@ -122,6 +122,115 @@ export async function initDb(): Promise<void> {
 
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_pedido_items_pedido ON pedido_items(pedido_id)`);
 
+  // ─── Packs ─────────────────────────────────────────────────────────────────
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS packs (
+      id          SERIAL PRIMARY KEY,
+      nombre      VARCHAR(200) NOT NULL,
+      descripcion TEXT,
+      precio      INTEGER NOT NULL DEFAULT 0,
+      emoji       VARCHAR(10) NOT NULL DEFAULT '📦',
+      color_fondo TEXT NOT NULL DEFAULT 'linear-gradient(135deg, #1c3829 0%, #2a5540 100%)',
+      imagen_url  VARCHAR(500),
+      activo      BOOLEAN NOT NULL DEFAULT true,
+      orden       INTEGER NOT NULL DEFAULT 0,
+      creado_en   TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  // Migración: agregar columnas nuevas si no existen (para instancias ya inicializadas)
+  await pool.query(`ALTER TABLE packs ADD COLUMN IF NOT EXISTS precio INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE packs ADD COLUMN IF NOT EXISTS emoji VARCHAR(10) NOT NULL DEFAULT '📦'`);
+  await pool.query(`ALTER TABLE packs ADD COLUMN IF NOT EXISTS color_fondo TEXT NOT NULL DEFAULT 'linear-gradient(135deg, #1c3829 0%, #2a5540 100%)'`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pack_productos (
+      pack_id     INTEGER NOT NULL REFERENCES packs(id) ON DELETE CASCADE,
+      producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+      cantidad    INTEGER NOT NULL DEFAULT 1,
+      PRIMARY KEY (pack_id, producto_id)
+    )
+  `);
+
+  // ─── Seed 10 packs (solo si la tabla está vacía) ──────────────────────────
+  const packsCount = await pool.query(`SELECT COUNT(*) FROM packs`);
+  if (parseInt(packsCount.rows[0].count, 10) === 0) {
+    // Insertar packs base
+    const packRows = await pool.query(`
+      INSERT INTO packs (nombre, descripcion, precio, emoji, color_fondo, activo, orden) VALUES
+        ('Pack Asado',           'Cerveza, vino y pisco para la parrilla perfecta',          12990, '🍖', 'linear-gradient(135deg, #6B1A1A 0%, #B84A00 100%)', true,  0),
+        ('Pack Cena Romántica',  'Dos vinos premium para una noche especial',                 9990, '🥂', 'linear-gradient(135deg, #4a1040 0%, #8B1A1A 100%)', true,  1),
+        ('Pack Whisky & Cola',   'Johnnie Walker Red Label con Coca-Cola',                   21490, '🥃', 'linear-gradient(135deg, #1a1a2e 0%, #4a3010 100%)', true,  2),
+        ('Pack Pisco Sour',      'Todo lo que necesitas para un pisco sour perfecto',         6490, '🍸', 'linear-gradient(135deg, #2a1a5c 0%, #4d35a0 100%)', true,  3),
+        ('Pack Mojito',          'Bacardí, agua mineral y Coca-Cola listos para el mojito',  15990, '🍹', 'linear-gradient(135deg, #0a3d1f 0%, #1a7a3a 100%)', true,  4),
+        ('Pack Sin Alcohol',     'Refrescos y agua para todos los gustos',                    4990, '🥤', 'linear-gradient(135deg, #1a4a6e 0%, #2d7ab5 100%)', true,  5),
+        ('Pack Vinos Surtidos',  'Una selección de tintos para disfrutar en buena compañía', 14990, '🍷', 'linear-gradient(135deg, #4a1040 0%, #8B1A1A 100%)', true,  6),
+        ('Pack Cuba Libre',      'Bacardí y Coca-Cola, la combinación clásica',              14990, '🍹', 'linear-gradient(135deg, #3d1515 0%, #8B3014 100%)', true,  7),
+        ('Pack Vodka Party',     'Absolut y Smirnoff para tu próxima fiesta',                24990, '🫧', 'linear-gradient(135deg, #1a2a3d 0%, #2d4f7a 100%)', true,  8),
+        ('Pack Cervecero',       'Lo mejor de la cerveza nacional e importada',               9990, '🍺', 'linear-gradient(135deg, #a56323 0%, #D4A017 100%)', true,  9)
+      RETURNING id, nombre, orden
+    `);
+
+    // Mapear nombre → id para asignar productos
+    const pid = (nombre: string) => packRows.rows.find((r: {id: number; nombre: string}) => r.nombre === nombre)?.id;
+
+    // pack_productos: [pack_nombre, producto_id, cantidad]
+    const asignaciones: [string, number, number][] = [
+      // Pack Asado: Cristal 6-Pack(5) + Gato Negro(4) + Capel 35°(13)
+      ['Pack Asado', 5, 1], ['Pack Asado', 4, 1], ['Pack Asado', 13, 1],
+      // Pack Cena Romántica: Escudo Rojo(2) + Santa Helena Chardonnay(3)
+      ['Pack Cena Romántica', 2, 1], ['Pack Cena Romántica', 3, 1],
+      // Pack Whisky & Cola: JW Red Label(9) + Coca-Cola 6-Pack(19)
+      ['Pack Whisky & Cola', 9, 1], ['Pack Whisky & Cola', 19, 1],
+      // Pack Pisco Sour: Capel 35°(13) + Agua Mineral x2(20)
+      ['Pack Pisco Sour', 13, 1], ['Pack Pisco Sour', 20, 2],
+      // Pack Mojito: Bacardí(15) + Coca-Cola(19) + Agua Mineral(20)
+      ['Pack Mojito', 15, 1], ['Pack Mojito', 19, 1], ['Pack Mojito', 20, 1],
+      // Pack Sin Alcohol: Coca-Cola 6-Pack(19) + Agua Mineral x2(20)
+      ['Pack Sin Alcohol', 19, 1], ['Pack Sin Alcohol', 20, 2],
+      // Pack Vinos Surtidos: Casillero(1) + Escudo Rojo(2) + Gato Negro(4)
+      ['Pack Vinos Surtidos', 1, 1], ['Pack Vinos Surtidos', 2, 1], ['Pack Vinos Surtidos', 4, 1],
+      // Pack Cuba Libre: Bacardí(15) + Coca-Cola 6-Pack(19)
+      ['Pack Cuba Libre', 15, 1], ['Pack Cuba Libre', 19, 1],
+      // Pack Vodka Party: Absolut(17) + Smirnoff(18)
+      ['Pack Vodka Party', 17, 1], ['Pack Vodka Party', 18, 1],
+      // Pack Cervecero: Cristal(5) + Heineken x2(7) + Kunstmann(6)
+      ['Pack Cervecero', 5, 1], ['Pack Cervecero', 7, 2], ['Pack Cervecero', 6, 1],
+    ];
+
+    for (const [nombre, productoId, cantidad] of asignaciones) {
+      const packId = pid(nombre);
+      if (packId) {
+        await pool.query(
+          `INSERT INTO pack_productos (pack_id, producto_id, cantidad) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
+          [packId, productoId, cantidad]
+        );
+      }
+    }
+    console.log('✅ 10 packs iniciales creados');
+  }
+
+  // ─── Promos ────────────────────────────────────────────────────────────────
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS promos (
+      id          SERIAL PRIMARY KEY,
+      nombre      VARCHAR(200) NOT NULL,
+      descripcion TEXT,
+      tipo        VARCHAR(50) NOT NULL DEFAULT 'general',
+      activo      BOOLEAN NOT NULL DEFAULT true,
+      orden       INTEGER NOT NULL DEFAULT 0,
+      creado_en   TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS promo_productos (
+      promo_id    INTEGER NOT NULL REFERENCES promos(id) ON DELETE CASCADE,
+      producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+      PRIMARY KEY (promo_id, producto_id)
+    )
+  `);
+
   // ─── Seed 20 pedidos de prueba ────────────────────────────────────────────
   const pedidosCount = await pool.query(`SELECT COUNT(*) FROM pedidos`);
   if (parseInt(pedidosCount.rows[0].count, 10) === 0) {

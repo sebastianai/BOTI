@@ -7,6 +7,14 @@
   margin-top: calc(var(--header-h) + 56px);
   min-height: calc(100vh - var(--header-h) - 56px);
   overflow-x: hidden;
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 20px;
+
+  @media (min-width: 1720px) {
+    padding: 0;
+  }
 }
 
 .overlay {

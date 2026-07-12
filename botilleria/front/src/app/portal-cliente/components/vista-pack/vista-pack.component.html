@@ -1,0 +1,82 @@
+<div class="vista-pack">
+  <button class="vista-pack__volver" (click)="volver()">← Volver</button>
+
+  @if (cargando()) {
+    <div class="vista-pack__loader">Cargando pack...</div>
+  } @else if (error()) {
+    <div class="vista-pack__error">{{ error() }}</div>
+  } @else {
+  @if (pack(); as p) {
+    <div class="vista-pack__container">
+
+      <!-- Imagen -->
+      <div class="vista-pack__imagen-wrapper">
+        <div class="vista-pack__imagen" [style.background]="p.imagen_url ? 'none' : p.color_fondo">
+          @if (p.imagen_url) {
+            <img class="vista-pack__foto" [src]="imagenPack(p.imagen_url)" [alt]="p.nombre" />
+          } @else {
+            <span class="vista-pack__emoji">{{ p.emoji }}</span>
+          }
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div class="vista-pack__info">
+        <h1 class="vista-pack__titulo">{{ p.nombre }}</h1>
+
+        @if (p.descripcion) {
+          <p class="vista-pack__descripcion">{{ p.descripcion }}</p>
+        }
+
+        <div class="vista-pack__precios">
+          <span class="vista-pack__precio">{{ formatearPrecio(p.precio) }}</span>
+        </div>
+
+        <!-- Productos incluidos -->
+        @if (p.productos.length > 0) {
+          <div class="vista-pack__productos">
+            <h3 class="vista-pack__productos-titulo">Contenido del pack</h3>
+            <ul class="vista-pack__productos-lista">
+              @for (prod of p.productos; track prod.id) {
+                <li class="vista-pack__producto-item">
+                  <div class="vista-pack__producto-imagen" [style.background]="prod.imagen ? 'none' : prod.colorFondo">
+                    @if (prod.imagen) {
+                      <img [src]="urlImagen(prod.imagen)" [alt]="prod.nombre" />
+                    } @else {
+                      <span>{{ prod.emoji }}</span>
+                    }
+                  </div>
+                  <div class="vista-pack__producto-info">
+                    <span class="vista-pack__producto-nombre">{{ prod.nombre }}</span>
+                    <span class="vista-pack__producto-vol">{{ prod.volumen }}</span>
+                  </div>
+                  <span class="vista-pack__producto-cantidad">×{{ prod.cantidad }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        <!-- Acciones -->
+        <div class="vista-pack__acciones">
+          <div class="vista-pack__cantidad">
+            <button class="vista-pack__cantidad-btn" (click)="decrementar()">−</button>
+            <input type="number" class="vista-pack__cantidad-input" [value]="cantidad()" min="1" readonly />
+            <button class="vista-pack__cantidad-btn" (click)="incrementar()">+</button>
+          </div>
+
+          <button
+            class="vista-pack__agregar-btn"
+            [class.vista-pack__agregar-btn--ok]="agregado()"
+            (click)="agregarAlCarrito()">
+            {{ agregado() ? '✓ AGREGADO' : 'AGREGAR AL CARRITO' }}
+          </button>
+        </div>
+
+        <p class="vista-pack__aviso">Los precios publicados incluyen IVA e impuestos adicionales</p>
+      </div>
+
+    </div>
+  }
+  }
+</div>

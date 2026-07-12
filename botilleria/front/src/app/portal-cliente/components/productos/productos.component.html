@@ -1,25 +1,10 @@
 <section class="productos">
-  <div class="productos__toolbar">
-    <div class="productos__titulo-wrap">
-      <h2 class="productos__titulo">
-        {{ categoria() === 'Todos' ? 'Todos los productos' : categoria() }}
-      </h2>
-      <span class="productos__count">{{ productosFiltrados().length }} productos</span>
-    </div>
-    <div class="productos__search">
-      <span class="productos__search-icon">🔍</span>
-      <input
-        type="text"
-        class="productos__search-input"
-        placeholder="Buscar productos..."
-        [value]="busqueda()"
-        (input)="onBuscar($event)"
-        aria-label="Buscar productos"
-      />
-    </div>
+  <div class="section-title">
+    <h2>{{ categoria() === 'Todos' ? 'Todos los productos' : categoria() }}</h2>
   </div>
 
   <div class="productos__filtros">
+    <span class="productos__count">{{ productosFiltrados().length }} productos</span>
     <select class="productos__select" [value]="orden()" (change)="onOrden($event)" aria-label="Ordenar">
       <option value="default">Ordenar: Relevante</option>
       <option value="precio-asc">Precio: Menor a Mayor</option>
@@ -45,18 +30,88 @@
       </p>
       <small class="productos__sin-resultados-sub">Intenta con otro término de búsqueda</small>
     </div>
+  } @else if (esCarrusel()) {
+    <div class="productos__wrapper" #wrapper>
+      <div class="productos__track" #track (scroll)="onScrollTrack()">
+        @for (producto of productosFiltrados(); track producto.id) {
+          <article class="producto-card" [class.producto-card--agregado]="estaAgregado(producto.id)" (click)="onProductoClick(producto)">
+            <div class="producto-card__imagen" [style.background]="producto.imagen ? 'none' : producto.colorFondo">
+              @if (producto.imagen) {
+                <img class="producto-card__foto" [src]="urlImagenProducto(producto.imagen)" [alt]="producto.nombre" />
+              } @else {
+                <span class="producto-card__emoji">{{ producto.emoji }}</span>
+              }
+              @if (badgeLabel(producto); as label) {
+                <span class="producto-card__oferta-badge">{{ label }}</span>
+              }
+            </div>
+
+            <div class="producto-card__body">
+              <div class="producto-card__meta">
+                <span class="producto-card__categoria">{{ producto.categoria }}</span>
+                @if (producto.grados > 0) {
+                  <span class="producto-card__grados">{{ producto.grados }}°</span>
+                }
+              </div>
+
+              <h3 class="producto-card__nombre">{{ producto.nombre }}</h3>
+              <p class="producto-card__marca">{{ producto.marca }}</p>
+
+              <div class="producto-card__volumen">
+                <span>{{ producto.volumen }}</span>
+              </div>
+
+              <div class="producto-card__footer">
+                <div class="producto-card__precios">
+                  @if (producto.precioOriginal) {
+                    <span class="producto-card__precio-original">
+                      {{ formatearPrecio(producto.precioOriginal) }}
+                    </span>
+                  }
+                  <span class="producto-card__precio">{{ formatearPrecio(producto.precio) }}</span>
+                </div>
+
+                <button
+                  class="producto-card__btn"
+                  [class.producto-card__btn--agregado]="estaAgregado(producto.id)"
+                  (click)="agregarAlCarrito(producto); $event.stopPropagation()"
+                  [disabled]="estaAgregado(producto.id)">
+                  @if (estaAgregado(producto.id)) {
+                    <span>✓ Agregado</span>
+                  } @else {
+                    <span>+ Agregar</span>
+                  }
+                </button>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+
+      <button
+        class="prod-carousel-btn prod-carousel-btn--prev"
+        [style.top]="btnTop()" [style.left]="btnPrevL()"
+        (click)="anterior()" [disabled]="!puedeAnterior()"
+        aria-label="Anterior">&#8249;</button>
+
+      <button
+        class="prod-carousel-btn prod-carousel-btn--next"
+        [style.top]="btnTop()" [style.left]="btnNextL()"
+        (click)="siguiente()" [disabled]="!puedeSiguiente()"
+        aria-label="Siguiente">&#8250;</button>
+    </div>
   } @else {
     <div class="productos__grid">
       @for (producto of productosFiltrados(); track producto.id) {
-        <article class="producto-card" [class.producto-card--agregado]="estaAgregado(producto.id)">
+        <article class="producto-card" [class.producto-card--agregado]="estaAgregado(producto.id)" (click)="onProductoClick(producto)">
           <div class="producto-card__imagen" [style.background]="producto.imagen ? 'none' : producto.colorFondo">
             @if (producto.imagen) {
               <img class="producto-card__foto" [src]="urlImagenProducto(producto.imagen)" [alt]="producto.nombre" />
             } @else {
               <span class="producto-card__emoji">{{ producto.emoji }}</span>
             }
-            @if (producto.precioOriginal) {
-              <span class="producto-card__oferta-badge">OFERTA</span>
+            @if (badgeLabel(producto); as label) {
+              <span class="producto-card__oferta-badge">{{ label }}</span>
             }
           </div>
 
@@ -70,10 +125,9 @@
 
             <h3 class="producto-card__nombre">{{ producto.nombre }}</h3>
             <p class="producto-card__marca">{{ producto.marca }}</p>
-            <p class="producto-card__descripcion">{{ producto.descripcion }}</p>
 
             <div class="producto-card__volumen">
-              <span>📦 {{ producto.volumen }}</span>
+              <span>{{ producto.volumen }}</span>
             </div>
 
             <div class="producto-card__footer">
@@ -89,7 +143,7 @@
               <button
                 class="producto-card__btn"
                 [class.producto-card__btn--agregado]="estaAgregado(producto.id)"
-                (click)="agregarAlCarrito(producto)"
+                (click)="agregarAlCarrito(producto); $event.stopPropagation()"
                 [disabled]="estaAgregado(producto.id)">
                 @if (estaAgregado(producto.id)) {
                   <span>✓ Agregado</span>

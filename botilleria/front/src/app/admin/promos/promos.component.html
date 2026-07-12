@@ -1,0 +1,135 @@
+<div class="promos-admin">
+  <header class="promos-admin__header">
+    <div>
+      <h1 class="promos-admin__titulo">Promociones</h1>
+      <p class="promos-admin__subtitulo">Crea y gestiona promociones y asigna productos a cada una</p>
+    </div>
+    <button class="btn btn--primary" (click)="abrirNuevo()">+ Nueva promoción</button>
+  </header>
+
+  @if (errorMsg()) {
+    <div class="promos-admin__alerta">{{ errorMsg() }}</div>
+  }
+
+  @if (cargando()) {
+    <div class="promos-admin__estado">Cargando...</div>
+  } @else if (promos().length === 0) {
+    <div class="promos-admin__estado">No hay promociones. Crea la primera.</div>
+  } @else {
+    <div class="promos-grid">
+      @for (promo of promos(); track promo.id) {
+        <div class="promo-card" [class.promo-card--inactivo]="!promo.activo">
+          <div class="promo-card__head">
+            <span class="promo-card__tipo promo-card__tipo--{{ promo.tipo }}">
+              {{ tipoLabel(promo.tipo) }}
+            </span>
+            <span class="promo-card__orden">Orden {{ promo.orden }}</span>
+            <button
+              class="promo-card__toggle"
+              [class.promo-card__toggle--activo]="promo.activo"
+              (click)="toggleActivo(promo)">
+              {{ promo.activo ? '✅ Activa' : '⭕ Inactiva' }}
+            </button>
+          </div>
+
+          <h3 class="promo-card__nombre">{{ promo.nombre }}</h3>
+
+          @if (promo.descripcion) {
+            <p class="promo-card__desc">{{ promo.descripcion }}</p>
+          }
+
+          <p class="promo-card__productos-count">
+            {{ promo.producto_ids.length }} producto{{ promo.producto_ids.length !== 1 ? 's' : '' }} asignado{{ promo.producto_ids.length !== 1 ? 's' : '' }}
+          </p>
+
+          <div class="promo-card__acciones">
+            <button class="btn btn--secundario" (click)="abrirEditar(promo)">✏️ Editar</button>
+            <button class="btn btn--peligro" (click)="eliminar(promo)">🗑️</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (modalAbierto()) {
+  <div class="promo-modal-overlay" (click)="cerrar()">
+    <div class="promo-modal" (click)="$event.stopPropagation()">
+      <div class="promo-modal__header">
+        <h2>{{ idEditando() ? 'Editar promoción' : 'Nueva promoción' }}</h2>
+        <button class="promo-modal__close" (click)="cerrar()">✕</button>
+      </div>
+
+      <form class="promo-form" [formGroup]="form" (ngSubmit)="guardar()">
+        <div class="promo-form__campo promo-form__campo--ancho">
+          <label>Nombre de la promoción *</label>
+          <input type="text" formControlName="nombre" placeholder="Ej: Promo de julio" />
+        </div>
+
+        <div class="promo-form__campo promo-form__campo--ancho">
+          <label>Descripción (opcional)</label>
+          <textarea formControlName="descripcion" placeholder="Descripción de la promo..." rows="2"></textarea>
+        </div>
+
+        <div class="promo-form__grid2">
+          <div class="promo-form__campo">
+            <label>Tipo</label>
+            <select formControlName="tipo">
+              <option value="general">General</option>
+              <option value="2x1">2×1</option>
+              <option value="3x2">3×2</option>
+              <option value="descuento">Descuento</option>
+            </select>
+          </div>
+          <div class="promo-form__campo">
+            <label>Orden</label>
+            <input type="number" formControlName="orden" min="0" />
+          </div>
+          <div class="promo-form__campo promo-form__campo--check">
+            <label>
+              <input type="checkbox" formControlName="activo" />
+              Promoción activa
+            </label>
+          </div>
+        </div>
+
+        <div class="promo-form__campo promo-form__campo--ancho">
+          <label>
+            Productos en esta promoción
+            <span class="promo-form__count">{{ seleccionados().size }} seleccionados</span>
+          </label>
+          <input
+            class="promo-form__busqueda"
+            type="text"
+            placeholder="Buscar producto..."
+            [ngModel]="busquedaProducto()"
+            (ngModelChange)="busquedaProducto.set($event)"
+            [ngModelOptions]="{ standalone: true }" />
+          <div class="promo-form__producto-lista">
+            @for (p of productosFiltrados(); track p.id) {
+              <label class="promo-form__producto-item" [class.promo-form__producto-item--sel]="estaSeleccionado(p.id)">
+                <input type="checkbox" [checked]="estaSeleccionado(p.id)" (change)="toggleProducto(p.id)" />
+                <span class="promo-form__producto-nombre">{{ p.nombre }}</span>
+                <span class="promo-form__producto-cat">{{ p.categoria }}</span>
+              </label>
+            }
+            @if (productosFiltrados().length === 0) {
+              <p class="promo-form__vacio">Sin resultados</p>
+            }
+          </div>
+        </div>
+
+        @if (errorMsg()) {
+          <div class="promo-form__error">{{ errorMsg() }}</div>
+        }
+
+        <div class="promo-form__acciones">
+          <button type="button" class="btn btn--secundario" (click)="cerrar()">Cancelar</button>
+          <button type="submit" class="btn btn--primary" [disabled]="guardando()">
+            {{ guardando() ? 'Guardando...' : (idEditando() ? 'Guardar cambios' : 'Crear promoción') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

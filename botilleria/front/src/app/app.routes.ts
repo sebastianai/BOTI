@@ -10,7 +10,19 @@ export const routes: Routes = [
   {
     path: 'portal-cliente',
     loadComponent: () =>
-      import('./portal-cliente/portal-cliente.component').then(m => m.PortalClienteComponent)
+      import('./portal-cliente/portal-cliente.component').then(m => m.PortalClienteComponent),
+    children: [
+      {
+        path: 'producto/:id',
+        loadComponent: () =>
+          import('./portal-cliente/components/vista-producto/vista-producto.component').then(m => m.VistaProductoComponent)
+      },
+      {
+        path: 'pack/:id',
+        loadComponent: () =>
+          import('./portal-cliente/components/vista-pack/vista-pack.component').then(m => m.VistaPackComponent)
+      }
+    ]
   },
   {
     path: 'admin/login',
@@ -46,6 +58,18 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./admin/pedidos-admin/pedidos-admin.component')
             .then(m => m.PedidosAdminComponent)
+      },
+      {
+        path: 'promos',
+        loadComponent: () =>
+          import('./admin/promos/promos.component')
+            .then(m => m.PromosComponent)
+      },
+      {
+        path: 'packs',
+        loadComponent: () =>
+          import('./admin/packs/packs.component')
+            .then(m => m.PacksComponent)
       }
     ]
   }

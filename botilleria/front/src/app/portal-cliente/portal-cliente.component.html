@@ -3,10 +3,16 @@
   </app-header>
 
   <main class="portal-main">
-    <app-publicidad-carousel></app-publicidad-carousel>
-    <app-top-ventas></app-top-ventas>
-    <app-productos [categoria]="categoriaSeleccionada()"></app-productos>
-    <app-mapa-local></app-mapa-local>
+    <router-outlet></router-outlet>
+
+    @if (!hasChild()) {
+      <app-publicidad-carousel></app-publicidad-carousel>
+      <app-packs-portal></app-packs-portal>
+      <app-top-ventas></app-top-ventas>
+      <app-promos-portal></app-promos-portal>
+      <app-productos [categoria]="categoriaSeleccionada()"></app-productos>
+      <app-mapa-local></app-mapa-local>
+    }
   </main>
 
   <app-carrito [abierto]="carritoAbierto()" (cerrar)="carritoAbierto.set(false)">

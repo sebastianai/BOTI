@@ -22,6 +22,8 @@ export class AdminSidebarComponent {
     { label: 'Productos',         icon: '📦', ruta: '/admin' },
     { label: 'Pedidos',           icon: '🛒', ruta: '/admin/pedidos' },
     { label: 'Publicidad',        icon: '📢', ruta: '/admin/publicidad' },
+    { label: 'Promociones',       icon: '🏷️', ruta: '/admin/promos' },
+    { label: 'Packs',             icon: '📦', ruta: '/admin/packs' },
     { label: 'Ajustes generales', icon: '⚙️', ruta: '/admin/ajustes' },
   ];
 }

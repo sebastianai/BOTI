@@ -1,35 +1,33 @@
+@import '../../../../styles/mixins';
+
+/* ========== DESKTOP ========== */
 .carousel {
   position: relative;
   overflow: hidden;
-  border-radius: var(--radius-md);
-  margin: 0 0 28px;
+  border-radius: 0;
+  margin: 0 -20px 28px;
   background: var(--c-surface-alt);
   aspect-ratio: 16 / 5;
-  max-height: 320px;
-
-  @media (max-width: 767px) {
-    aspect-ratio: 16 / 7;
-    border-radius: 0;
-    margin: 0 -16px 20px;
-  }
+  max-height: 430px;
+  width: calc(100% + 40px);
 
   &__track {
     display: flex;
-    height: 100%;
+    height: 430px;
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform;
   }
 
   &__slide {
     min-width: 100%;
-    height: 100%;
+    height: 430px;
     position: relative;
     overflow: hidden;
   }
 
   &__img {
     width: 100%;
-    height: 100%;
+    height: 430px;
     object-fit: cover;
     display: block;
   }
@@ -59,16 +57,12 @@
     font-weight: 800;
     line-height: 1.2;
     text-shadow: 0 1px 4px rgba(0,0,0,0.5);
-
-    @media (max-width: 767px) { font-size: 16px; }
   }
 
   &__desc {
     font-size: 14px;
     opacity: 0.9;
     margin-top: 4px;
-
-    @media (max-width: 767px) { display: none; }
   }
 
   &__cta {
@@ -84,30 +78,6 @@
     transition: var(--transition);
 
     &:hover { background: var(--c-accent-light); }
-  }
-
-  &__btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.85);
-    color: var(--c-text);
-    font-size: 22px;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: var(--transition);
-    z-index: 2;
-
-    &:hover { background: #fff; }
-    &--prev { left: 12px; }
-    &--next { right: 12px; }
-
-    @media (max-width: 479px) { display: none; }
   }
 
   &__dots {
@@ -132,4 +102,28 @@
       transform: scale(1.3);
     }
   }
+}
+
+.carousel-nav-btn {
+  @include carousel-btn;
+
+  @media (max-width: 889px) {
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+  }
+}
+
+/* ========== MOBILE (max-width: 767px) ========== */
+@media (max-width: 767px) {
+  .carousel {
+    aspect-ratio: 16 / 7;
+    margin: 0 -16px 20px;
+    width: calc(100% + 32px);
+
+    &__titulo { font-size: 16px; }
+    &__desc   { display: none; }
+  }
+
+  .carousel-nav-btn { display: none; }
 }

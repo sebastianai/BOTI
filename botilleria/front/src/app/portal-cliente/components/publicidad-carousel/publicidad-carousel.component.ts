@@ -1,4 +1,7 @@
-import { Component, inject, OnDestroy, OnInit, signal, HostListener } from '@angular/core';
+import {
+  Component, inject, OnDestroy, OnInit, signal,
+  HostListener, ViewChild, ElementRef, afterNextRender, DestroyRef
+} from '@angular/core';
 import { PublicidadService, ItemPublicidad } from '../../services/publicidad.service';
 
 @Component({
@@ -9,11 +12,30 @@ import { PublicidadService, ItemPublicidad } from '../../services/publicidad.ser
 })
 export class PublicidadCarouselComponent implements OnInit, OnDestroy {
   private readonly publicidadService = inject(PublicidadService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly items = signal<ItemPublicidad[]>([]);
-  protected readonly indice = signal(0);
+  protected readonly items   = signal<ItemPublicidad[]>([]);
+  protected readonly indice  = signal(0);
+  protected readonly btnTop   = signal('-9999px');
+  protected readonly btnPrevL = signal('-9999px');
+  protected readonly btnNextL = signal('-9999px');
+
   private timer?: ReturnType<typeof setInterval>;
   private currentFormato: 'escritorio' | 'movil' = 'escritorio';
+
+  @ViewChild('carousel') carouselRef!: ElementRef<HTMLDivElement>;
+
+  constructor() {
+    afterNextRender(() => {
+      const onUpdate = () => this.actualizarPosBtn();
+      window.addEventListener('scroll', onUpdate, { passive: true });
+      window.addEventListener('resize', onUpdate, { passive: true });
+      this.destroyRef.onDestroy(() => {
+        window.removeEventListener('scroll', onUpdate);
+        window.removeEventListener('resize', onUpdate);
+      });
+    });
+  }
 
   ngOnInit(): void {
     this.cargarPorFormato();
@@ -43,6 +65,7 @@ export class PublicidadCarouselComponent implements OnInit, OnDestroy {
       this.items.set(data);
       this.indice.set(0);
       if (data.length > 1) this.iniciarAuto();
+      setTimeout(() => this.actualizarPosBtn(), 100);
     });
   }
 
@@ -63,5 +86,14 @@ export class PublicidadCarouselComponent implements OnInit, OnDestroy {
 
   protected imagenUrl(url: string | null): string {
     return this.publicidadService.imagenUrl(url);
+  }
+
+  private actualizarPosBtn(): void {
+    const el = this.carouselRef?.nativeElement;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    this.btnTop.set(`${rect.top + rect.height / 2}px`);
+    this.btnPrevL.set(`${rect.left + 4}px`);
+    this.btnNextL.set(`${rect.right - 42}px`);
   }
 }

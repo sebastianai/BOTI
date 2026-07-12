@@ -1,0 +1,73 @@
+@if (packs().length > 0) {
+  <section class="packs-carousel">
+    <div class="section-title">
+      <h2>LLEVA TU PACK</h2>
+    </div>
+
+    <div class="packs-carousel__wrapper" #wrapper>
+      <div class="packs-carousel__track" #track (scroll)="onScroll()">
+        @for (pack of packs(); track pack.id) {
+          <article
+            class="producto-card"
+            [class.producto-card--agregado]="estaAgregado(pack.id)"
+            (click)="onPackClick(pack)">
+
+            <div class="producto-card__imagen" [style.background]="pack.imagen_url ? 'none' : pack.color_fondo">
+              @if (pack.imagen_url) {
+                <img class="producto-card__foto" [src]="imagenUrl(pack.imagen_url)" [alt]="pack.nombre" />
+              } @else {
+                <span class="producto-card__emoji">{{ pack.emoji }}</span>
+              }
+            </div>
+
+            <div class="producto-card__body">
+              <h3 class="producto-card__nombre">{{ pack.nombre }}</h3>
+              @if (pack.descripcion) {
+                <p class="producto-card__marca">{{ pack.descripcion }}</p>
+              }
+
+              <div class="producto-card__footer">
+                <div class="producto-card__precios">
+                  <span class="producto-card__precio">{{ formatearPrecio(pack.precio) }}</span>
+                </div>
+
+                <button
+                  class="producto-card__btn"
+                  [class.producto-card__btn--agregado]="estaAgregado(pack.id)"
+                  (click)="agregar(pack); $event.stopPropagation()"
+                  [disabled]="estaAgregado(pack.id)">
+                  @if (estaAgregado(pack.id)) {
+                    <span>&#10003; Agregado</span>
+                  } @else {
+                    <span>+ Agregar</span>
+                  }
+                </button>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+
+      <!-- Botones fixed: escapan del stacking context de portal-layout -->
+      <button
+        class="packs-carousel__btn packs-carousel__btn--prev"
+        [style.top]="btnTop()"
+        [style.left]="btnPrevL()"
+        (click)="anterior()"
+        [disabled]="!puedeAnterior()"
+        aria-label="Anterior">
+        &#8249;
+      </button>
+
+      <button
+        class="packs-carousel__btn packs-carousel__btn--next"
+        [style.top]="btnTop()"
+        [style.left]="btnNextL()"
+        (click)="siguiente()"
+        [disabled]="!puedeSiguiente()"
+        aria-label="Siguiente">
+        &#8250;
+      </button>
+    </div>
+  </section>
+}

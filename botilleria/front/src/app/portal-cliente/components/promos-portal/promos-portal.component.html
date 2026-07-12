@@ -1,0 +1,77 @@
+@for (promo of promos(); track promo.id; let i = $index) {
+  <section class="promo-seccion">
+    <div class="section-title">
+      <h2>{{ promo.nombre }}</h2>
+    </div>
+
+    <div class="promo-seccion__wrapper" #carouselWrapper>
+      <div class="promo-seccion__track" #carouselTrack (scroll)="onScroll(i)">
+        @for (p of promo.productos; track p.id) {
+          <article
+            class="producto-card"
+            [class.producto-card--agregado]="estaAgregado(p.id)"
+            (click)="onProductoClick(p)">
+
+            <div class="producto-card__imagen" [style.background]="p.imagen ? 'none' : p.colorFondo">
+              @if (p.imagen) {
+                <img class="producto-card__foto" [src]="urlImagen(p.imagen)" [alt]="p.nombre" />
+              } @else {
+                <span class="producto-card__emoji">{{ p.emoji }}</span>
+              }
+              <span class="producto-card__oferta-badge">{{ tipoLabel(promo.tipo) }}</span>
+            </div>
+
+            <div class="producto-card__body">
+              <div class="producto-card__meta">
+                <span class="producto-card__categoria">{{ p.categoria }}</span>
+                @if (p.grados > 0) {
+                  <span class="producto-card__grados">{{ p.grados }}°</span>
+                }
+              </div>
+
+              <h3 class="producto-card__nombre">{{ p.nombre }}</h3>
+              <p class="producto-card__marca">{{ p.marca }}</p>
+
+              <div class="producto-card__volumen">
+                <span>{{ p.volumen }}</span>
+              </div>
+
+              <div class="producto-card__footer">
+                <div class="producto-card__precios">
+                  @if (p.precioOriginal) {
+                    <span class="producto-card__precio-original">{{ formatearPrecio(p.precioOriginal) }}</span>
+                  }
+                  <span class="producto-card__precio">{{ formatearPrecio(p.precio) }}</span>
+                </div>
+
+                <button
+                  class="producto-card__btn"
+                  [class.producto-card__btn--agregado]="estaAgregado(p.id)"
+                  (click)="agregar(p); $event.stopPropagation()"
+                  [disabled]="estaAgregado(p.id)">
+                  @if (estaAgregado(p.id)) {
+                    <span>✓ Agregado</span>
+                  } @else {
+                    <span>+ Agregar</span>
+                  }
+                </button>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+
+      <button
+        class="promo-carousel-btn promo-carousel-btn--prev"
+        [style.top]="btnTop(i)" [style.left]="btnPrevL(i)"
+        (click)="anterior(i)" [disabled]="!puedeAnterior(i)"
+        aria-label="Anterior">&#8249;</button>
+
+      <button
+        class="promo-carousel-btn promo-carousel-btn--next"
+        [style.top]="btnTop(i)" [style.left]="btnNextL(i)"
+        (click)="siguiente(i)" [disabled]="!puedeSiguiente(i)"
+        aria-label="Siguiente">&#8250;</button>
+    </div>
+  </section>
+}

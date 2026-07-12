@@ -1,5 +1,5 @@
 @if (items().length > 0) {
-  <div class="carousel">
+  <div class="carousel" #carousel>
     <div class="carousel__track" [style.transform]="'translateX(-' + indice() * 100 + '%)'">
       @for (item of items(); track item.id) {
         <div class="carousel__slide">
@@ -22,8 +22,6 @@
     </div>
 
     @if (items().length > 1) {
-      <button class="carousel__btn carousel__btn--prev" (click)="anterior()" aria-label="Anterior">‹</button>
-      <button class="carousel__btn carousel__btn--next" (click)="siguiente()" aria-label="Siguiente">›</button>
       <div class="carousel__dots">
         @for (item of items(); track item.id; let i = $index) {
           <button
@@ -36,4 +34,16 @@
       </div>
     }
   </div>
+
+  @if (items().length > 1) {
+    <button
+      class="carousel-nav-btn carousel-nav-btn--prev"
+      [style.top]="btnTop()" [style.left]="btnPrevL()"
+      (click)="anterior()" aria-label="Anterior">&#8249;</button>
+
+    <button
+      class="carousel-nav-btn carousel-nav-btn--next"
+      [style.top]="btnTop()" [style.left]="btnNextL()"
+      (click)="siguiente()" aria-label="Siguiente">&#8250;</button>
+  }
 }

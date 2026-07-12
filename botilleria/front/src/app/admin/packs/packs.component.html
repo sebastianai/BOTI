@@ -1,0 +1,176 @@
+<div class="packs-admin">
+  <header class="packs-admin__header">
+    <div>
+      <h1 class="packs-admin__titulo">Packs</h1>
+      <p class="packs-admin__subtitulo">Crea packs de productos con imagen y gestiona su contenido</p>
+    </div>
+    <button class="btn btn--primary" (click)="abrirNuevo()">+ Nuevo pack</button>
+  </header>
+
+  @if (errorMsg()) {
+    <div class="packs-admin__alerta">{{ errorMsg() }}</div>
+  }
+
+  @if (cargando()) {
+    <div class="packs-admin__estado">Cargando...</div>
+  } @else if (packs().length === 0) {
+    <div class="packs-admin__estado">No hay packs. Crea el primero.</div>
+  } @else {
+    <div class="packs-grid">
+      @for (pack of packs(); track pack.id) {
+        <div class="pack-card" [class.pack-card--inactivo]="!pack.activo">
+
+          <label
+            class="pack-card__img-zona"
+            [class.pack-card__img-zona--drag]="arrastrando() === pack.id"
+            (dragover)="onDragOver($event, pack.id)"
+            (dragleave)="onDragLeave()"
+            (drop)="onDrop($event, pack.id)">
+            <input type="file" accept="image/*" (change)="onSeleccionarImagen($event, pack.id)" hidden />
+            @if (subiendoImagen() === pack.id) {
+              <div class="pack-card__img-loading">⏳</div>
+            } @else if (pack.imagen_url) {
+              <img [src]="imagenUrl(pack.imagen_url)" alt="" class="pack-card__img" />
+              <span class="pack-card__img-hint">Cambiar imagen</span>
+            } @else {
+              <div class="pack-card__img-empty">
+                <span>📦</span>
+                <small>Arrastra o clic para subir imagen</small>
+              </div>
+            }
+          </label>
+
+          <div class="pack-card__body">
+            <div class="pack-card__meta">
+              <span class="pack-card__orden">Orden {{ pack.orden }}</span>
+              <button
+                class="pack-card__toggle"
+                [class.pack-card__toggle--activo]="pack.activo"
+                (click)="toggleActivo(pack)">
+                {{ pack.activo ? '✅ Activo' : '⭕ Inactivo' }}
+              </button>
+            </div>
+            <p class="pack-card__nombre">{{ pack.nombre }}</p>
+            @if (pack.descripcion) {
+              <p class="pack-card__desc">{{ pack.descripcion }}</p>
+            }
+            <p class="pack-card__count">
+              {{ pack.producto_ids.length }} producto{{ pack.producto_ids.length !== 1 ? 's' : '' }}
+            </p>
+            <div class="pack-card__acciones">
+              <button class="btn btn--secundario" (click)="abrirEditar(pack)">✏️ Editar</button>
+              <button class="btn btn--peligro" (click)="eliminar(pack)">🗑️</button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (modalAbierto()) {
+  <div class="pack-modal-overlay" (click)="cerrar()">
+    <div class="pack-modal" (click)="$event.stopPropagation()">
+      <div class="pack-modal__header">
+        <h2>{{ idEditando() ? 'Editar pack' : 'Nuevo pack' }}</h2>
+        <button class="pack-modal__close" (click)="cerrar()">✕</button>
+      </div>
+
+      <form class="pack-form" [formGroup]="form" (ngSubmit)="guardar()">
+
+        <!-- Imagen -->
+        <div class="pack-form__campo pack-form__campo--ancho">
+          <label>Imagen del pack</label>
+          <label class="pack-form__img-input" [class.pack-form__img-input--preview]="previewImagen() !== null">
+            <input type="file" accept="image/*" (change)="onSeleccionarImagenModal($event)" hidden />
+            @if (previewImagen()) {
+              <img [src]="previewImagen()!" alt="Preview" class="pack-form__img-preview" />
+              <span class="pack-form__img-hint">Cambiar imagen</span>
+            } @else {
+              <div class="pack-form__img-empty">
+                <span>📦</span>
+                <p>Haz clic para seleccionar una imagen</p>
+              </div>
+            }
+          </label>
+        </div>
+
+        <!-- Nombre -->
+        <div class="pack-form__campo pack-form__campo--ancho">
+          <label>Nombre del pack *</label>
+          <input type="text" formControlName="nombre" placeholder="Ej: Pack Asado" />
+        </div>
+
+        <!-- Descripción -->
+        <div class="pack-form__campo pack-form__campo--ancho">
+          <label>Descripción (opcional)</label>
+          <textarea formControlName="descripcion" placeholder="Describe el pack..." rows="2"></textarea>
+        </div>
+
+        <!-- Orden / Activo -->
+        <div class="pack-form__grid2">
+          <div class="pack-form__campo">
+            <label>Orden</label>
+            <input type="number" formControlName="orden" min="0" />
+          </div>
+          <div class="pack-form__campo pack-form__campo--check">
+            <label>
+              <input type="checkbox" formControlName="activo" />
+              Pack activo
+            </label>
+          </div>
+        </div>
+
+        <!-- Productos -->
+        <div class="pack-form__campo pack-form__campo--ancho">
+          <label>
+            Productos del pack
+            <span class="pack-form__count">{{ seleccionados().size }} seleccionados</span>
+          </label>
+          <input
+            class="pack-form__busqueda"
+            type="text"
+            placeholder="Buscar producto..."
+            [ngModel]="busquedaProducto()"
+            (ngModelChange)="busquedaProducto.set($event)"
+            [ngModelOptions]="{ standalone: true }" />
+          <div class="pack-form__producto-lista">
+            @for (p of productosFiltrados(); track p.id) {
+              <div class="pack-form__producto-item" [class.pack-form__producto-item--sel]="estaSeleccionado(p.id)">
+                <label class="pack-form__producto-check">
+                  <input type="checkbox" [checked]="estaSeleccionado(p.id)" (change)="toggleProducto(p.id)" />
+                  <span class="pack-form__producto-nombre">{{ p.nombre }}</span>
+                  <span class="pack-form__producto-cat">{{ p.categoria }}</span>
+                </label>
+                @if (estaSeleccionado(p.id)) {
+                  <div class="pack-form__cantidad">
+                    <label>Cant.</label>
+                    <input
+                      type="number"
+                      [value]="getCantidad(p.id)"
+                      (change)="setCantidad(p.id, +$any($event.target).value)"
+                      min="1" />
+                  </div>
+                }
+              </div>
+            }
+            @if (productosFiltrados().length === 0) {
+              <p class="pack-form__vacio">Sin resultados</p>
+            }
+          </div>
+        </div>
+
+        @if (errorMsg()) {
+          <div class="pack-form__error">{{ errorMsg() }}</div>
+        }
+
+        <div class="pack-form__acciones">
+          <button type="button" class="btn btn--secundario" (click)="cerrar()">Cancelar</button>
+          <button type="submit" class="btn btn--primary" [disabled]="guardando()">
+            {{ guardando() ? 'Guardando...' : (idEditando() ? 'Guardar cambios' : 'Crear pack') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

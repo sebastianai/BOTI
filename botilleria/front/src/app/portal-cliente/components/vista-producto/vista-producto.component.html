@@ -1,0 +1,86 @@
+<div class="vista-producto">
+  <app-breadcrumb [items]="breadcrumbItems()"></app-breadcrumb>
+
+  @if (producto(); as prod) {
+    @if (cargando()) {
+      <div class="vista-producto__loader">Cargando producto...</div>
+    } @else {
+      <div class="vista-producto__container">
+      <!-- Columna izquierda: Imagen -->
+      <div class="vista-producto__imagen-wrapper">
+        <div class="vista-producto__imagen" [style.background]="prod.imagen ? 'none' : prod.colorFondo">
+          @if (prod.imagen) {
+            <img class="vista-producto__foto" [src]="portalConfig.productoImageUrl(prod.imagen)" [alt]="prod.nombre" />
+          } @else {
+            <span class="vista-producto__emoji">{{ prod.emoji }}</span>
+          }
+          @if (prod.precioOriginal) {
+            <span class="vista-producto__badge">EXCLUSIVO WEB</span>
+          }
+        </div>
+      </div>
+
+      <!-- Columna derecha: Información -->
+      <div class="vista-producto__info">
+        <h1 class="vista-producto__titulo">{{ prod.nombre }}</h1>
+
+        <div class="vista-producto__precios">
+          <span class="vista-producto__precio">{{ formatearPrecio(prod.precio) }}</span>
+          @if (prod.precioOriginal) {
+            <span class="vista-producto__precio-original">{{ formatearPrecio(prod.precioOriginal) }}</span>
+          }
+          <span class="vista-producto__precio-litro">{{ calcularPrecioXLitro(prod.precio, prod.volumen) }} x lt.</span>
+        </div>
+
+        <p class="vista-producto__descripcion">{{ prod.descripcion }}</p>
+
+        <div class="vista-producto__atributos">
+          <h3 class="vista-producto__atributos-titulo">Atributos</h3>
+          <div class="vista-producto__atributos-list">
+            <p class="vista-producto__atributo">
+              <strong>Categoría/s:</strong> {{ prod.categoria }}
+            </p>
+            <p class="vista-producto__atributo">
+              <strong>Marca:</strong> {{ prod.marca }}
+            </p>
+            @if (prod.grados) {
+              <p class="vista-producto__atributo">
+                <strong>Grados:</strong> {{ prod.grados }}°
+              </p>
+            }
+            <p class="vista-producto__atributo">
+              <strong>Volumen:</strong> {{ prod.volumen }}
+            </p>
+          </div>
+        </div>
+
+        <div class="vista-producto__acciones">
+          <div class="vista-producto__cantidad">
+            <button class="vista-producto__cantidad-btn" (click)="decrementarCantidad()">−</button>
+            <input
+              type="number"
+              class="vista-producto__cantidad-input"
+              [value]="cantidad()"
+              min="1"
+              readonly
+            />
+            <button class="vista-producto__cantidad-btn" (click)="incrementarCantidad()">+</button>
+          </div>
+
+          <button class="vista-producto__agregar-btn" (click)="agregarAlCarrito()">
+            AGREGAR AL CARRITO
+          </button>
+        </div>
+
+        <div class="vista-producto__info-extra">
+          <p class="vista-producto__stock">Stock inicial = {{ prod.stock }}</p>
+          <p class="vista-producto__aviso">Los precios publicados incluyen IVA e impuestos adicionales</p>
+          <p class="vista-producto__aviso">* Los precios de internet podrían variar con los del local</p>
+        </div>
+      </div>
+    </div>
+    }
+  } @else if (error()) {
+    <div class="vista-producto__error">{{ error() }}</div>
+  }
+</div>

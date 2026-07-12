@@ -1,0 +1,45 @@
+/* ========== DESKTOP ========== */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 0;
+  font-size: 14px;
+  color: var(--c-text-muted);
+
+  &__item {
+    display: flex;
+    align-items: center;
+  }
+
+  &__link {
+    color: var(--c-primary);
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+
+    &:hover {
+      color: var(--c-primary-light);
+      text-decoration: underline;
+    }
+  }
+
+  &__text {
+    color: var(--c-text);
+    font-weight: 600;
+  }
+
+  &__separator {
+    color: var(--c-text-muted);
+    user-select: none;
+  }
+}
+
+/* ========== MOBILE (max-width: 767px) ========== */
+@media (max-width: 767px) {
+  .breadcrumb {
+    font-size: 12px;
+    padding: 12px 0;
+  }
+}

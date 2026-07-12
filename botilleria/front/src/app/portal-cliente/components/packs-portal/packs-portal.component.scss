@@ -1,0 +1,174 @@
+@import '../../../../styles/mixins';
+
+.packs-carousel {
+  margin-bottom: 40px;
+  position: relative;
+
+  &__wrapper {
+    position: relative;
+  }
+
+  &__track {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar { display: none; }
+  }
+
+  &__btn {
+    position: fixed; /* escapa del stacking context de portal-layout */
+    transform: translateY(-50%);
+    z-index: 9999;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid var(--c-border);
+    background: #fff;
+    color: var(--c-text);
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+
+    &:hover:not([disabled]) {
+      background: var(--c-primary);
+      color: #fff;
+      border-color: var(--c-primary);
+    }
+
+    &[disabled] {
+display: none;
+
+    }
+  }
+}
+
+.producto-card {
+  flex: 0 0 240px;
+  scroll-snap-align: start;
+  background: var(--c-surface);
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--c-border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: var(--transition);
+  cursor: pointer;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--c-primary) 30%, transparent);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
+  }
+
+  &--agregado { border-color: var(--c-success); }
+
+  &__imagen {
+    @include imagen-producto-escritorio;
+  }
+
+  &__emoji {
+    font-size: 56px;
+    line-height: 1;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  }
+
+  &__foto {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &__body {
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 4px;
+  }
+
+  &__nombre { @include titulo-producto-escritorio; }
+  &__marca  { @include marca-producto-escritorio; flex: 1; }
+
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--c-border);
+  }
+
+  &__precios {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  &__precio {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--c-primary);
+  }
+
+  &__btn {
+    background: var(--c-primary);
+    color: #fff;
+    padding: 9px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: var(--transition);
+    flex-shrink: 0;
+
+    &:hover:not(:disabled) {
+      background: var(--c-primary-light);
+      transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) { transform: translateY(0); }
+
+    &--agregado { background: var(--c-success); cursor: default; }
+    &:disabled  { opacity: 1; }
+  }
+}
+
+/* ── Mobile ── */
+@media (max-width: 889px) {
+  .packs-carousel__btn {
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+  }
+
+  .producto-card {
+    flex: 0 0 180px;
+
+    &__imagen { height: 110px; }
+    &__emoji  { font-size: 44px; }
+    &__body   { padding: 10px 12px 12px; }
+
+    &__footer {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      padding-top: 10px;
+    }
+
+    &__btn {
+      padding: 9px;
+      text-align: center;
+      width: 100%;
+    }
+  }
+}

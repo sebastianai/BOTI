@@ -1,11 +1,13 @@
 <header class="header">
   <!-- Nivel 1: Logo, búsqueda, ubicación, login, carrito -->
   <div class="header__nivel1">
-    <div class="header__brand">
+    <div class="header__brand" (click)="navegarInicio()">
       <img
         class="header__logo"
         [src]="portalConfig.logoUrl(portalConfig.config().logo_url)"
-        [alt]="portalConfig.config().nombre_negocio" />
+        [alt]="portalConfig.config().nombre_negocio"
+        width="60"
+        height="60" />
       <div class="header__brand-text">
         <span class="header__brand-name">{{ portalConfig.config().nombre_negocio }}</span>
         <span class="header__brand-tagline">{{ portalConfig.config().tagline }}</span>
@@ -16,8 +18,24 @@
       <input
         type="text"
         class="header__search-input"
-        placeholder="¿qué estás buscando?" />
-      <button class="header__search-btn" aria-label="Buscar">🔍</button>
+        placeholder="¿qué estás buscando?"
+        [value]="searchQuery()"
+        #searchInput
+        (input)="onSearchChange(searchInput.value)"
+        (keyup.enter)="onSearchEnter()"
+        aria-label="Buscar productos" />
+      <button class="header__search-btn" aria-label="Buscar" (click)="onSearchEnter()">🔍</button>
+
+      @if (searchOpen()) {
+        <div class="header__search-results">
+          @for (producto of searchResults(); track producto.id) {
+            <button class="header__search-item" (click)="navegar(producto.id)">
+              <span class="header__search-item-nombre">{{ producto.nombre }}</span>
+              <span class="header__search-item-precio">{{ formatearPrecio(producto.precio) }}</span>
+            </button>
+          }
+        </div>
+      }
     </div>
 
     <div class="header__actions">

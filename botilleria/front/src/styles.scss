@@ -21,9 +21,9 @@
   --header-h: 100px;
   --header-max-w: 1280px;
   --admin-header-h: 70px;
-  --admin-sidebar-w: 240px;
-  --sidebar-w: 260px;
-  --cart-w: 380px;
+  --admin-sidebar-w: 450px;
+  --sidebar-w: 450px;
+  --cart-w: 650px;
   --radius-pill: 50px;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -36,6 +36,7 @@
 
   --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 
 html,
 body {
@@ -76,4 +77,30 @@ ol {
 img {
   max-width: 100%;
   display: block;
+}
+
+/* ── Separador de sección con líneas horizontales ── */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 0 0 20px;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1.5px;
+    background: var(--c-text);
+  }
+
+  h2 {
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--c-text);
+    line-height: 1;
+  }
 }

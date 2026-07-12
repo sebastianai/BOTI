@@ -1,0 +1,16 @@
+<nav class="breadcrumb">
+  @for (item of items(); let last = $last; let i = $index; track i) {
+    <span class="breadcrumb__item">
+      @if (item.path) {
+        <a class="breadcrumb__link" (click)="navigate(item.path)">
+          {{ item.label }}
+        </a>
+      } @else {
+        <span class="breadcrumb__text">{{ item.label }}</span>
+      }
+    </span>
+    @if (!last) {
+      <span class="breadcrumb__separator">&nbsp;&gt;&nbsp;</span>
+    }
+  }
+</nav>

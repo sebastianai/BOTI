@@ -8,6 +8,8 @@ import { authRouter } from './routes/auth.routes';
 import { portalConfigRouter } from './routes/portal-config.routes';
 import { publicidadRouter } from './routes/publicidad.routes';
 import { pedidosRouter } from './routes/pedidos.routes';
+import { promosRouter } from './routes/promos.routes';
+import { packsRouter } from './routes/packs.routes';
 import { initDb } from './db-init';
 
 export const app = express();
@@ -21,6 +23,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/portal-config', portalConfigRouter);
 app.use('/api/publicidad', publicidadRouter);
 app.use('/api/pedidos', pedidosRouter);
+app.use('/api/promos', promosRouter);
+app.use('/api/packs', packsRouter);
 app.use('/api/productos', productosRouter);
 app.use('/api/categorias', categoriasRouter);
 
