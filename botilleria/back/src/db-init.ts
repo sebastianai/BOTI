@@ -231,6 +231,89 @@ export async function initDb(): Promise<void> {
     )
   `);
 
+  // ─── Productos y packs adicionales (migración safe) ──────────────────────
+  const pId: Record<string, number> = {};
+  const allProds = await pool.query(`SELECT id, nombre FROM productos`);
+  for (const r of allProds.rows) pId[r.nombre] = r.id;
+
+  const upsertProd = async (
+    nombre: string, marca: string, precio: number, precioOriginal: number | null,
+    categoria: string, descripcion: string, grados: number, volumen: string,
+    emoji: string, colorFondo: string, stock: number, topVentas = false, promocion: string | null = null
+  ) => {
+    const r = await pool.query(
+      `INSERT INTO productos (nombre, marca, precio, precio_original, categoria, descripcion, grados, volumen, emoji, color_fondo, stock, top_ventas, promocion)
+       SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
+       WHERE NOT EXISTS (SELECT 1 FROM productos WHERE nombre = $1 AND marca = $2)
+       RETURNING id`,
+      [nombre, marca, precio, precioOriginal, categoria, descripcion, grados, volumen, emoji, colorFondo, stock, topVentas, promocion]
+    );
+    pId[nombre] = r.rows.length > 0 ? r.rows[0].id
+      : (await pool.query(`SELECT id FROM productos WHERE nombre=$1 AND marca=$2`, [nombre, marca])).rows[0].id;
+  };
+
+  await upsertProd('Carménère Santa Ema Reserva', 'Santa Ema', 4990, null, 'Vinos', 'Carménère característico con notas de pimienta, ciruela y hierbas verdes.', 14.0, '750ml', '🍷', 'linear-gradient(135deg, #3d0c2a 0%, #6b1a45 100%)', 28);
+  await upsertProd('Sauvignon Blanc Veramonte', 'Veramonte', 4490, null, 'Vinos', 'Blanco fresco del Valle de Casablanca con notas de limón, pomelo y hierbas.', 12.5, '750ml', '🥂', 'linear-gradient(135deg, #5c6b1a 0%, #9eb030 100%)', 35);
+  await upsertProd('Montes Alpha Cabernet Sauvignon', 'Montes', 9990, 12990, 'Vinos', 'Ícono chileno de clase mundial, 12 meses en barrica de roble francés.', 14.5, '750ml', '🍷', 'linear-gradient(135deg, #5c1a1a 0%, #9e2b2b 100%)', 18, false, 'descuento');
+  await upsertProd('Matetic Rosé EQ', 'Matetic', 5490, null, 'Vinos', 'Rosé elegante del Valle de Rosario con carácter frutal y acidez vibrante.', 12.0, '750ml', '🌸', 'linear-gradient(135deg, #8B3a5c 0%, #c96090 100%)', 22);
+  await upsertProd('Sunrise Chardonnay', 'Concha y Toro', 3990, null, 'Vinos', 'Chardonnay suave y versátil con notas tropicales y un toque de madera.', 12.5, '750ml', '🥂', 'linear-gradient(135deg, #7a7020 0%, #c4b835 100%)', 30);
+  await upsertProd('Don Melchor', 'Concha y Toro', 69990, null, 'Vinos', 'El vino ícono de Chile. Cabernet Sauvignon de clase mundial del Alto Maipo.', 14.5, '750ml', '🍷', 'linear-gradient(135deg, #1a0a0a 0%, #4a1515 100%)', 6, true);
+  await upsertProd('Corona Extra', 'Corona', 1490, null, 'Cervezas', 'La cerveza mexicana más icónica, ligera y refrescante. Sírvela con limón.', 4.5, '355ml', '🍺', 'linear-gradient(135deg, #8B8000 0%, #d4bc00 100%)', 42, true);
+  await upsertProd('Stella Artois', 'AB InBev', 1790, null, 'Cervezas', 'Pilsner belga premium con siglos de tradición. Elegante y sofisticada.', 5.0, '330ml', '🍺', 'linear-gradient(135deg, #2a1a0a 0%, #5c3a18 100%)', 38);
+  await upsertProd('Budweiser Lager', 'Anheuser-Busch', 1590, null, 'Cervezas', 'La cerveza americana más famosa del mundo. Suave, limpia y refrescante.', 5.0, '355ml', '🍺', 'linear-gradient(135deg, #8B0a0a 0%, #cc1515 100%)', 44);
+  await upsertProd('Leffe Blonde', 'AB InBev', 2490, null, 'Cervezas', 'Abadía belga con notas de naranja, clavo y dulzor especiado singular.', 6.6, '330ml', '🍺', 'linear-gradient(135deg, #8B6800 0%, #d4a500 100%)', 16);
+  await upsertProd('Guinness Draught', 'Guinness', 2990, null, 'Cervezas', 'La stout irlandesa más emblemática del mundo. Cremosa con notas de cacao y café.', 4.2, '440ml', '🍺', 'linear-gradient(135deg, #0a0a0a 0%, #2a2a2a 100%)', 20);
+  await upsertProd('Royal Guard IPA', 'Cervecería Austral', 2190, null, 'Cervezas', 'IPA artesanal chilena con aroma a frutas tropicales y amargor pronunciado.', 6.0, '500ml', '🍺', 'linear-gradient(135deg, #1a3d1a 0%, #2d6b2d 100%)', 14);
+  await upsertProd('Chivas Regal 12 años', 'Chivas Brothers', 28990, 33990, 'Whisky', 'Blend premium escocés con 12 años de maduración. Suave, rico y generoso.', 40.0, '750ml', '🥃', 'linear-gradient(135deg, #8B6900 0%, #d4a800 100%)', 12, true, 'descuento');
+  await upsertProd("Jack Daniel's Old No. 7", "Jack Daniel's", 22990, null, 'Whisky', 'Tennessee Whiskey filtrado por carbón de arce. Suave, afrutado y con vainilla.', 40.0, '750ml', '🥃', 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)', 14, true);
+  await upsertProd('Glenfiddich 12 años', 'William Grant & Sons', 39990, 44990, 'Whisky', 'El single malt más premiado del mundo. Peras, roble y un toque de avellana.', 40.0, '750ml', '🥃', 'linear-gradient(135deg, #2a4a1a 0%, #4a8030 100%)', 8, false, 'descuento');
+  await upsertProd('Mistral Doble Destilado 40°', 'Mistral', 7490, null, 'Pisco', 'Pisco doble destilado de uva moscatel, suave y muy aromático.', 40.0, '700ml', '🍸', 'linear-gradient(135deg, #3d1a5c 0%, #6b30a0 100%)', 26);
+  await upsertProd('Los Nichos Gran Reserva 43°', 'Los Nichos', 15990, null, 'Pisco', 'Gran pisco artesanal del Elqui, envejecido en roble americano. Perfil complejo.', 43.0, '700ml', '🍸', 'linear-gradient(135deg, #1a0a3d 0%, #35186b 100%)', 10);
+  await upsertProd('Havana Club Añejo 3 años', 'Havana Club', 11990, null, 'Ron', 'Ron cubano joven con aromas frescos a caña y notas de banana y vainilla.', 40.0, '750ml', '🍹', 'linear-gradient(135deg, #5c2a0a 0%, #a04f1a 100%)', 18);
+  await upsertProd('Captain Morgan Spiced Gold', 'Diageo', 14990, null, 'Ron', 'Ron especiado jamaicano con vainilla, canela y notas de caramelo.', 35.0, '750ml', '🍹', 'linear-gradient(135deg, #6B1a00 0%, #b03000 100%)', 16);
+  await upsertProd('Ciroc Original', 'Diageo', 29990, null, 'Vodka', 'Vodka ultrapremium destilado 5 veces de uvas finas francesas. Suave y frutal.', 40.0, '750ml', '🫧', 'linear-gradient(135deg, #1a1a5c 0%, #2d2da0 100%)', 12);
+  await upsertProd('Ketel One', 'Nolet', 19990, null, 'Vodka', 'Vodka artesanal holandés destilado en alambique de cobre. Excepcional pureza.', 40.0, '750ml', '🫧', 'linear-gradient(135deg, #0a1a5c 0%, #1a309e 100%)', 10);
+  await upsertProd('Red Bull Energy Drink', 'Red Bull', 1990, null, 'Sin Alcohol', 'Bebida energizante que revitaliza la mente y el cuerpo. El original.', 0, '250ml', '⚡', 'linear-gradient(135deg, #8B8B00 0%, #cccc00 100%)', 48);
+  await upsertProd("Watt's Mix Tropical", "Watt's", 890, null, 'Sin Alcohol', 'Jugo de frutas tropicales naturales, sin azúcar añadida.', 0, '1L', '🧃', 'linear-gradient(135deg, #5c8B00 0%, #9ecc00 100%)', 55);
+  await upsertProd('Schweppes Indian Tonic', 'Schweppes', 1190, null, 'Sin Alcohol', 'Agua tónica clásica con quina natural. Perfecta para cócteles.', 0, '350ml', '🫧', 'linear-gradient(135deg, #1a5c8B 0%, #2d9ecc 100%)', 40);
+  await upsertProd('Sprite 6-Pack', 'Coca-Cola', 3990, null, 'Sin Alcohol', 'Pack de 6 latas de la bebida cítrica más refrescante, sin cafeína.', 0, '6 x 355ml', '🥤', 'linear-gradient(135deg, #1a8B1a 0%, #2dcc2d 100%)', 35);
+  console.log('✅ Productos adicionales sincronizados');
+
+  // ─── Packs adicionales ────────────────────────────────────────────────────
+  const upsertPack = async (
+    nombre: string, descripcion: string, precio: number, emoji: string, colorFondo: string, orden: number,
+    productos: Array<[string, number]>
+  ) => {
+    const r = await pool.query(
+      `INSERT INTO packs (nombre, descripcion, precio, emoji, color_fondo, activo, orden)
+       SELECT $1,$2,$3,$4,$5,true,$6
+       WHERE NOT EXISTS (SELECT 1 FROM packs WHERE nombre = $1)
+       RETURNING id`,
+      [nombre, descripcion, precio, emoji, colorFondo, orden]
+    );
+    if (r.rows.length === 0) return;
+    const packId = r.rows[0].id;
+    for (const [prodNombre, cantidad] of productos) {
+      const prodId = pId[prodNombre];
+      if (prodId) await pool.query(
+        `INSERT INTO pack_productos (pack_id, producto_id, cantidad) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`,
+        [packId, prodId, cantidad]
+      );
+    }
+  };
+
+  await upsertPack('Pack Día de Campo', 'Rosé, cervezas frías y agua para el picnic perfecto', 12990, '🌿', 'linear-gradient(135deg, #3a6b1a 0%, #6bb030 100%)', 10, [['Matetic Rosé EQ', 1], ['Cristal Lager 6-Pack', 1], ['Agua Mineral Cachantun', 2]]);
+  await upsertPack('Pack After Party', 'Vodka premium y energéticas para seguir la noche', 29990, '🎉', 'linear-gradient(135deg, #1a0a3d 0%, #4a18a0 100%)', 11, [['Absolut Original', 1], ['Smirnoff No. 21', 1], ['Red Bull Energy Drink', 4]]);
+  await upsertPack('Pack Noche de Whisky', 'Los mejores blends para una velada sofisticada', 44990, '🥃', 'linear-gradient(135deg, #1a1000 0%, #4a3000 100%)', 12, [["Jack Daniel's Old No. 7", 1], ['Chivas Regal 12 años', 1]]);
+  await upsertPack('Pack Ron Tropical', 'Ron cubano y especiado con jugo tropical', 19990, '🌴', 'linear-gradient(135deg, #3d1a00 0%, #8B4a00 100%)', 13, [['Havana Club Añejo 3 años', 1], ['Captain Morgan Spiced Gold', 1], ["Watt's Mix Tropical", 2]]);
+  await upsertPack('Pack Vinos Premium', 'Selección de los mejores tintos chilenos', 24990, '🏆', 'linear-gradient(135deg, #3d0a0a 0%, #8B1a1a 100%)', 14, [['Montes Alpha Cabernet Sauvignon', 1], ['Escudo Rojo Reserva', 1], ['Casillero del Diablo Cab. Sauv.', 1]]);
+  await upsertPack('Pack Fiesta Cervecera', 'Las mejores cervezas importadas para tu reunión', 16990, '🎊', 'linear-gradient(135deg, #1a3d1a 0%, #2d7a2d 100%)', 15, [['Corona Extra', 2], ['Stella Artois', 2], ['Heineken Lager', 2]]);
+  await upsertPack('Pack Pisco Premium', 'Los mejores piscos chilenos en un solo pack', 22990, '🌟', 'linear-gradient(135deg, #2a0a4a 0%, #5a1a8B 100%)', 16, [['Pisco ABA 40°', 1], ['Tres Erres Gran Pisco', 1], ['Mistral Doble Destilado 40°', 1]]);
+  await upsertPack('Pack Clásico Chileno', 'El sabor de Chile: buen vino, cerveza y pisco', 13990, '🇨🇱', 'linear-gradient(135deg, #0a1a4a 0%, #1a3a8B 100%)', 17, [['Carménère Santa Ema Reserva', 1], ['Cristal Lager 6-Pack', 1], ['Capel Especial 35°', 1]]);
+  await upsertPack('Pack Importados Elite', 'Selección premium de lo mejor del mundo', 59990, '💎', 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3d 100%)', 18, [['Glenfiddich 12 años', 1], ['Ciroc Original', 1], ['Ketel One', 1]]);
+  await upsertPack('Pack Aperitivo', 'Vodka artesanal con tónica para el aperitivo perfecto', 14990, '🍋', 'linear-gradient(135deg, #0a2a4a 0%, #1a5a8B 100%)', 19, [['Ketel One', 1], ['Schweppes Indian Tonic', 3]]);
+  console.log('✅ Packs adicionales sincronizados');
+
   // ─── Seed 20 pedidos de prueba ────────────────────────────────────────────
   const pedidosCount = await pool.query(`SELECT COUNT(*) FROM pedidos`);
   if (parseInt(pedidosCount.rows[0].count, 10) === 0) {
