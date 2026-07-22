@@ -21,6 +21,9 @@ export class AdminSidebarComponent {
   protected readonly navItems: NavItem[] = [
     { label: 'Productos',         icon: '📦', ruta: '/admin' },
     { label: 'Pedidos',           icon: '🛒', ruta: '/admin/pedidos' },
+    { label: 'Clientes',          icon: '👥', ruta: '/admin/clientes' },
+    { label: 'Sucursales',        icon: '🏬', ruta: '/admin/sucursales' },
+    { label: 'Estadísticas',      icon: '📊', ruta: '/admin/estadisticas' },
     { label: 'Publicidad',        icon: '📢', ruta: '/admin/publicidad' },
     { label: 'Promociones',       icon: '🏷️', ruta: '/admin/promos' },
     { label: 'Packs',             icon: '📦', ruta: '/admin/packs' },

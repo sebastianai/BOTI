@@ -1,0 +1,124 @@
+<div class="registro">
+  <button class="registro__volver" (click)="volver()">← Volver</button>
+
+  <div class="registro__card">
+    @if (exito()) {
+      <div class="registro__exito">
+        <span class="registro__exito-emoji">🎉</span>
+        <h1 class="registro__titulo">¡Listo, {{ nombre() }}!</h1>
+        <p class="registro__exito-texto">Tu cuenta fue creada correctamente. Ya puedes disfrutar de los beneficios del club.</p>
+        <button class="registro__btn" (click)="irALogin()">Iniciar sesión</button>
+        <button class="registro__btn registro__btn--secundario" (click)="volver()">Ir al inicio</button>
+      </div>
+    } @else {
+      <h1 class="registro__titulo">Inscríbete al Club {{ portalConfig.config().nombre_negocio }}</h1>
+
+      <div class="registro__fila">
+        <div class="registro__campo">
+          <input type="text" placeholder="Nombre" [ngModel]="nombre()" (ngModelChange)="nombre.set($event)" />
+          @if (intentoEnviar() && !nombre().trim()) {
+            <span class="registro__error">Requerido</span>
+          }
+        </div>
+        <div class="registro__campo">
+          <input type="text" placeholder="Apellido" [ngModel]="apellido()" (ngModelChange)="apellido.set($event)" />
+          @if (intentoEnviar() && !apellido().trim()) {
+            <span class="registro__error">Requerido</span>
+          }
+        </div>
+      </div>
+
+      <div class="registro__fila">
+        <div class="registro__campo">
+          <input type="text" placeholder="RUT" [ngModel]="rut()" (ngModelChange)="rut.set($event)" />
+          @if (intentoEnviar() && !rut().trim()) {
+            <span class="registro__error">Requerido</span>
+          }
+        </div>
+        <div class="registro__campo">
+          <input type="email" placeholder="Email" [ngModel]="correo()" (ngModelChange)="correo.set($event)" />
+          @if (intentoEnviar() && !correo().trim()) {
+            <span class="registro__error">Requerido</span>
+          }
+        </div>
+      </div>
+
+      <div class="registro__fila">
+        <div class="registro__campo">
+          <div class="registro__telefono">
+            <span class="registro__bandera">🇨🇱</span>
+            <input type="tel" placeholder="Teléfono móvil" [ngModel]="telefono()" (ngModelChange)="telefono.set($event)" />
+          </div>
+          @if (intentoEnviar() && !telefono().trim()) {
+            <span class="registro__error">Requerido</span>
+          }
+        </div>
+        <div class="registro__campo">
+          <input type="date" placeholder="Fecha de nacimiento" [ngModel]="fechaNacimiento()" (ngModelChange)="fechaNacimiento.set($event)" />
+          @if (intentoEnviar() && !fechaNacimiento().trim()) {
+            <span class="registro__error">Requerido</span>
+          }
+        </div>
+      </div>
+
+      <div class="registro__fila">
+        <div class="registro__campo">
+          <input type="password" placeholder="Contraseña (mín. 8 caracteres)" [ngModel]="contrasena()" (ngModelChange)="contrasena.set($event)" />
+          @if (intentoEnviar() && contrasena().length < 8) {
+            <span class="registro__error">Debe tener al menos 8 caracteres</span>
+          }
+        </div>
+        <div class="registro__campo">
+          <input type="password" placeholder="Confirmar contraseña" [ngModel]="confirmarContrasena()" (ngModelChange)="confirmarContrasena.set($event)" />
+          @if (intentoEnviar() && contrasena() !== confirmarContrasena()) {
+            <span class="registro__error">Las contraseñas no coinciden</span>
+          }
+        </div>
+      </div>
+
+      <div class="registro__genero">
+        <p class="registro__genero-titulo">Género</p>
+        <label class="registro__radio">
+          <input type="radio" name="genero" [checked]="genero() === 'femenino'" (change)="seleccionarGenero('femenino')" />
+          Femenino
+        </label>
+        <label class="registro__radio">
+          <input type="radio" name="genero" [checked]="genero() === 'masculino'" (change)="seleccionarGenero('masculino')" />
+          Masculino
+        </label>
+        <label class="registro__radio">
+          <input type="radio" name="genero" [checked]="genero() === 'no_decir'" (change)="seleccionarGenero('no_decir')" />
+          Prefiero no decir
+        </label>
+        @if (intentoEnviar() && !genero()) {
+          <span class="registro__error">Selecciona una opción</span>
+        }
+      </div>
+
+      <label class="registro__check">
+        <input type="checkbox" [checked]="aceptaTerminos()" (change)="toggleTerminos()" />
+        <span>
+          Acepto expresamente los <a href="javascript:void(0)">Términos y Condiciones</a> y la
+          <a href="javascript:void(0)">Política de Privacidad</a> de {{ portalConfig.config().nombre_negocio }}
+        </span>
+      </label>
+      @if (intentoEnviar() && !aceptaTerminos()) {
+        <span class="registro__error">Debes aceptar los términos y condiciones</span>
+      }
+
+      <label class="registro__recaptcha">
+        <input type="checkbox" [checked]="noRobot()" (change)="toggleNoRobot()" />
+        <span>No soy un robot</span>
+        <span class="registro__recaptcha-badge">reCAPTCHA</span>
+      </label>
+
+      @if (error()) {
+        <p class="registro__error registro__error--general">{{ error() }}</p>
+      }
+
+      <button class="registro__btn" [disabled]="enviando()" (click)="registrar()">
+        {{ enviando() ? 'Registrando...' : 'Registrarme' }}
+      </button>
+    }
+  </div>
+</div>

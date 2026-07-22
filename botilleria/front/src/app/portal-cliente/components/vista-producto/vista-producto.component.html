@@ -8,12 +8,8 @@
       <div class="vista-producto__container">
       <!-- Columna izquierda: Imagen -->
       <div class="vista-producto__imagen-wrapper">
-        <div class="vista-producto__imagen" [style.background]="prod.imagen ? 'none' : prod.colorFondo">
-          @if (prod.imagen) {
-            <img class="vista-producto__foto" [src]="portalConfig.productoImageUrl(prod.imagen)" [alt]="prod.nombre" />
-          } @else {
-            <span class="vista-producto__emoji">{{ prod.emoji }}</span>
-          }
+        <div class="vista-producto__imagen">
+          <img class="vista-producto__foto" [src]="portalConfig.productoImageUrl(prod.imagen)" [alt]="prod.nombre" />
           @if (prod.precioOriginal) {
             <span class="vista-producto__badge">EXCLUSIVO WEB</span>
           }

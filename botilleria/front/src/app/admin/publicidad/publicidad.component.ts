@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { PublicidadService, ItemPublicidad } from '../../portal-cliente/services/publicidad.service';
+import { CategoriasService, Categoria } from '../../portal-cliente/services/categorias.service';
 
 @Component({
   selector: 'app-publicidad',
@@ -11,9 +12,11 @@ import { PublicidadService, ItemPublicidad } from '../../portal-cliente/services
 })
 export class PublicidadComponent implements OnInit {
   private readonly publicidadService = inject(PublicidadService);
+  private readonly categoriasService = inject(CategoriasService);
   private readonly fb = inject(FormBuilder);
 
   protected readonly items = signal<ItemPublicidad[]>([]);
+  protected readonly categorias = signal<Categoria[]>([]);
   protected readonly cargando = signal(true);
   protected readonly modalAbierto = signal(false);
   protected readonly idEditando = signal<number | null>(null);
@@ -25,15 +28,19 @@ export class PublicidadComponent implements OnInit {
   protected readonly previewImagen = signal<string | null>(null);
 
   protected readonly form = this.fb.group({
-    titulo:      [''],
-    descripcion: [''],
-    enlace:      [''],
-    orden:       [0],
-    activo:      [true],
-    formato:     ['escritorio'],
+    titulo:             [''],
+    descripcion:        [''],
+    enlace:             [''],
+    orden:              [0],
+    activo:             [true],
+    formato:            ['escritorio'],
+    categoria_producto: [''],
   });
 
-  ngOnInit(): void { this.cargar(); }
+  ngOnInit(): void {
+    this.cargar();
+    this.categoriasService.obtenerCategorias().subscribe({ next: data => this.categorias.set(data) });
+  }
 
   private cargar(): void {
     this.cargando.set(true);
@@ -47,7 +54,7 @@ export class PublicidadComponent implements OnInit {
     this.idEditando.set(null);
     this.imagenSeleccionada.set(null);
     this.previewImagen.set(null);
-    this.form.reset({ titulo: '', descripcion: '', enlace: '', orden: this.items().length, activo: true, formato: 'escritorio' });
+    this.form.reset({ titulo: '', descripcion: '', enlace: '', orden: this.items().length, activo: true, formato: 'escritorio', categoria_producto: '' });
     this.modalAbierto.set(true);
   }
 
@@ -55,7 +62,11 @@ export class PublicidadComponent implements OnInit {
     this.idEditando.set(item.id);
     this.imagenSeleccionada.set(null);
     this.previewImagen.set(null);
-    this.form.patchValue({ titulo: item.titulo ?? '', descripcion: item.descripcion ?? '', enlace: item.enlace ?? '', orden: item.orden, activo: item.activo, formato: item.formato ?? 'escritorio' });
+    this.form.patchValue({
+      titulo: item.titulo ?? '', descripcion: item.descripcion ?? '', enlace: item.enlace ?? '',
+      orden: item.orden, activo: item.activo, formato: item.formato ?? 'escritorio',
+      categoria_producto: item.categoria_producto ?? ''
+    });
     this.modalAbierto.set(true);
   }
 

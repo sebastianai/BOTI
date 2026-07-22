@@ -1,5 +1,7 @@
 import { ASSET_BASE_URL } from './api.config';
 
-export function urlImagenProducto(rutaImagen: string | undefined): string {
-  return rutaImagen ? `${ASSET_BASE_URL}${rutaImagen}` : '';
+const IMAGEN_PRODUCTO_VACIO = 'assets/img/vacio_producto.png';
+
+export function urlImagenProducto(rutaImagen: string | undefined | null): string {
+  return rutaImagen ? `${ASSET_BASE_URL}${rutaImagen}` : IMAGEN_PRODUCTO_VACIO;
 }

@@ -10,6 +10,9 @@ import { publicidadRouter } from './routes/publicidad.routes';
 import { pedidosRouter } from './routes/pedidos.routes';
 import { promosRouter } from './routes/promos.routes';
 import { packsRouter } from './routes/packs.routes';
+import { estadisticasRouter } from './routes/estadisticas.routes';
+import { sucursalesRouter } from './routes/sucursales.routes';
+import { clientesRouter } from './routes/clientes.routes';
 import { initDb } from './db-init';
 
 export const app = express();
@@ -27,5 +30,8 @@ app.use('/api/promos', promosRouter);
 app.use('/api/packs', packsRouter);
 app.use('/api/productos', productosRouter);
 app.use('/api/categorias', categoriasRouter);
+app.use('/api/estadisticas', estadisticasRouter);
+app.use('/api/sucursales', sucursalesRouter);
+app.use('/api/clientes', clientesRouter);
 
 initDb().catch(err => console.error('Error al inicializar la base de datos:', err));

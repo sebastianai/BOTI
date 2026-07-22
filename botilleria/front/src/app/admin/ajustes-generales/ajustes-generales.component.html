@@ -18,7 +18,7 @@
     <!-- Logo -->
     <section class="ajustes__card">
       <h2 class="ajustes__card-titulo">Logo del negocio</h2>
-      <p class="ajustes__card-desc">Se muestra en el header del portal de clientes. PNG, JPG, SVG o WEBP.</p>
+      <p class="ajustes__card-desc">Se muestra en el header del portal de clientes y como ícono de la pestaña del navegador. PNG, JPG, SVG o WEBP.</p>
 
       <div class="ajustes__logo-actual">
         <img
@@ -69,6 +69,14 @@
             }
           </div>
 
+          <div class="ajustes__campo">
+            <label>Nombre de la pestaña del navegador</label>
+            <input type="text" formControlName="nombre_pestana" placeholder="Ej: MI BOTI" maxlength="60" />
+            @if (form.get('nombre_pestana')?.touched && form.get('nombre_pestana')?.invalid) {
+              <span class="ajustes__campo-error">Campo requerido</span>
+            }
+          </div>
+
           <div class="ajustes__campo ajustes__campo--ancho">
             <label>Descripción del negocio</label>
             <textarea formControlName="descripcion" placeholder="Breve descripción para el portal..." rows="3"></textarea>
@@ -95,6 +103,16 @@
             <small style="color: var(--c-text-muted); font-size: 12px; font-weight: 400;">
               En Google Maps → Compartir → Insertar mapa → copia solo el valor del atributo <code>src</code>.
             </small>
+          </div>
+
+          <div class="ajustes__campo">
+            <label>Instagram</label>
+            <input type="text" formControlName="instagram_url" placeholder="https://instagram.com/tu_negocio" />
+          </div>
+
+          <div class="ajustes__campo">
+            <label>Facebook</label>
+            <input type="text" formControlName="facebook_url" placeholder="https://facebook.com/tu_negocio" />
           </div>
 
         </div>

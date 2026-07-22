@@ -119,6 +119,14 @@
     small { font-size: 13px; color: var(--c-text-muted); }
   }
 
+  &__grupo {
+    margin-bottom: 36px;
+  }
+
+  &__grupo-titulo {
+    margin-bottom: 16px;
+  }
+
   &__sin-resultados {
     display: flex;
     flex-direction: column;

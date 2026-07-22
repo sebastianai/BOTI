@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, effect } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { PortalConfigService, DisenoPortal } from '../../core/portal-config.service';
@@ -11,7 +11,7 @@ import { API_URL } from '../../core/api.config';
   templateUrl: './ajustes-generales.component.html',
   styleUrl: './ajustes-generales.component.scss'
 })
-export class AjustesGeneralesComponent implements OnInit {
+export class AjustesGeneralesComponent {
   private readonly http = inject(HttpClient);
   protected readonly portalConfig = inject(PortalConfigService);
   private readonly fb = inject(FormBuilder);
@@ -23,9 +23,12 @@ export class AjustesGeneralesComponent implements OnInit {
   protected readonly arrastrando = signal(false);
   protected readonly logoPreview = signal<string | null>(null);
 
+  private formPatched = false;
+
   protected readonly form = this.fb.group({
     nombre_negocio: ['', Validators.required],
     tagline:        ['', Validators.required],
+    nombre_pestana: ['', Validators.required],
     descripcion:    [''],
     telefono:       [''],
     email:          [''],
@@ -33,20 +36,32 @@ export class AjustesGeneralesComponent implements OnInit {
     color_primario: [''],
     color_acento:   [''],
     mapa_url:       [''],
+    instagram_url:  [''],
+    facebook_url:   [''],
   });
 
-  ngOnInit(): void {
-    const cfg = this.portalConfig.config();
-    this.form.patchValue({
-      nombre_negocio: cfg.nombre_negocio,
-      tagline:        cfg.tagline,
-      descripcion:    cfg.descripcion ?? '',
-      telefono:       cfg.telefono ?? '',
-      email:          cfg.email ?? '',
-      direccion:      cfg.direccion ?? '',
-      color_primario: cfg.color_primario,
-      color_acento:   cfg.color_acento,
-      mapa_url:       cfg.mapa_url ?? '',
+  constructor() {
+    // El GET inicial de PortalConfigService es asíncrono: si parcheamos el
+    // formulario antes de que resuelva, quedan valores por defecto que luego
+    // pisan los datos reales al guardar. Esperamos a que `cargado()` sea true.
+    effect(() => {
+      if (this.formPatched || !this.portalConfig.cargado()) return;
+      const cfg = this.portalConfig.config();
+      this.form.patchValue({
+        nombre_negocio: cfg.nombre_negocio,
+        tagline:        cfg.tagline,
+        nombre_pestana: cfg.nombre_pestana,
+        descripcion:    cfg.descripcion ?? '',
+        telefono:       cfg.telefono ?? '',
+        email:          cfg.email ?? '',
+        direccion:      cfg.direccion ?? '',
+        color_primario: cfg.color_primario,
+        color_acento:   cfg.color_acento,
+        mapa_url:       cfg.mapa_url ?? '',
+        instagram_url:  cfg.instagram_url ?? '',
+        facebook_url:   cfg.facebook_url ?? '',
+      });
+      this.formPatched = true;
     });
   }
 

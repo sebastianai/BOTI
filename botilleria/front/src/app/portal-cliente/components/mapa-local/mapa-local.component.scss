@@ -31,6 +31,32 @@
     margin-top: 2px;
   }
 
+  &__sucursales {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  &__sucursal-btn {
+    padding: 8px 16px;
+    border-radius: var(--radius-pill);
+    border: 1.5px solid var(--c-border);
+    background: var(--c-surface);
+    color: var(--c-text);
+    font-size: 13px;
+    font-weight: 600;
+    transition: var(--transition);
+
+    &:hover { border-color: color-mix(in srgb, var(--c-primary) 50%, transparent); }
+
+    &--sel {
+      background: var(--c-primary);
+      border-color: var(--c-primary);
+      color: #fff;
+    }
+  }
+
   &__wrap {
     border-radius: var(--radius-md);
     overflow: hidden;

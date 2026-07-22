@@ -1,0 +1,211 @@
+<div class="est-admin">
+
+  <header class="est-admin__header">
+    <div>
+      <h1 class="est-admin__titulo">Estadísticas</h1>
+      <p class="est-admin__subtitulo">Rendimiento del negocio en base a los pedidos registrados</p>
+    </div>
+    <button class="btn btn--secundario" (click)="cargar()">↻ Actualizar</button>
+  </header>
+
+  @if (errorMsg()) {
+    <div class="est-admin__alerta">{{ errorMsg() }}</div>
+  }
+
+  @if (cargando()) {
+    <div class="est-admin__loading">Cargando estadísticas…</div>
+  } @else {
+  @if (datos(); as d) {
+
+    <!-- KPIs -->
+    <div class="est-kpis">
+      <div class="est-kpi">
+        <span class="est-kpi__label">Ventas totales</span>
+        <span class="est-kpi__valor">{{ clp(d.resumen.ventasTotales) }}</span>
+        <span class="est-kpi__sub">{{ d.resumen.totalPedidos }} pedidos válidos</span>
+      </div>
+      <div class="est-kpi">
+        <span class="est-kpi__label">Ticket promedio</span>
+        <span class="est-kpi__valor">{{ clp(d.resumen.ticketPromedio) }}</span>
+        <span class="est-kpi__sub">por pedido</span>
+      </div>
+      <div class="est-kpi">
+        <span class="est-kpi__label">Ventas del mes</span>
+        <span class="est-kpi__valor">{{ clp(d.ventasDelMes.ventas) }}</span>
+        @if (d.ventasDelMes.variacionPorcentual !== null) {
+          <span class="est-kpi__badge" [class.est-kpi__badge--neg]="d.ventasDelMes.variacionPorcentual < 0">
+            {{ d.ventasDelMes.variacionPorcentual >= 0 ? '▲' : '▼' }} {{ pct(d.ventasDelMes.variacionPorcentual) }}% vs mes anterior
+          </span>
+        }
+        <span class="est-kpi__sub">{{ d.ventasDelMes.pedidos }} pedidos este mes</span>
+      </div>
+      <div class="est-kpi">
+        <span class="est-kpi__label">Pedidos pendientes</span>
+        <span class="est-kpi__valor">{{ pedidosPendientes() }}</span>
+        <span class="est-kpi__sub">por confirmar</span>
+      </div>
+    </div>
+
+    <!-- Producto y pack más vendido -->
+    <div class="est-destacados">
+      <div class="est-card est-card--destacado">
+        <div class="est-card__header">
+          <span class="est-card__icono">🏆</span>
+          <div class="est-card__header-texto">
+            <span class="est-card__titulo">Producto más vendido</span>
+            @if (d.productoMasVendido; as top) {
+              <span class="est-card__nombre">{{ top.nombre }}</span>
+              <span class="est-card__meta">{{ top.unidades }} unidades · {{ clp(top.ingresos) }} en ventas</span>
+            } @else {
+              <span class="est-card__vacio">Sin ventas registradas</span>
+            }
+          </div>
+        </div>
+        @if (d.topProductos.length) {
+          <ul class="est-ranking">
+            @for (p of d.topProductos; track p.nombre) {
+              <li class="est-ranking__item" [title]="p.nombre + ': ' + p.unidades + ' unidades · ' + clp(p.ingresos)">
+                <span class="est-ranking__nombre"><span class="est-ranking__texto">{{ p.nombre }}</span></span>
+                <div class="est-ranking__barra-wrap">
+                  <div class="est-ranking__barra est-ranking__barra--primario" [style.width.%]="(p.unidades / maxUnidadesProducto()) * 100"></div>
+                </div>
+                <span class="est-ranking__valor">{{ p.unidades }} u.</span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <div class="est-card est-card--destacado">
+        <div class="est-card__header">
+          <span class="est-card__icono">📦</span>
+          <div class="est-card__header-texto">
+            <span class="est-card__titulo">Pack más vendido</span>
+            @if (d.packMasVendido; as top) {
+              <span class="est-card__nombre">{{ top.nombre }}</span>
+              <span class="est-card__meta">{{ top.unidades }} unidades · {{ clp(top.ingresos) }} en ventas</span>
+            } @else {
+              <span class="est-card__vacio">Sin ventas registradas</span>
+            }
+          </div>
+        </div>
+        @if (d.topPacks.length) {
+          <ul class="est-ranking">
+            @for (p of d.topPacks; track p.nombre) {
+              <li class="est-ranking__item" [title]="p.nombre + ': ' + p.unidades + ' unidades · ' + clp(p.ingresos)">
+                <span class="est-ranking__nombre"><span class="est-ranking__texto">{{ p.nombre }}</span></span>
+                <div class="est-ranking__barra-wrap">
+                  <div class="est-ranking__barra est-ranking__barra--acento" [style.width.%]="(p.unidades / maxUnidadesPack()) * 100"></div>
+                </div>
+                <span class="est-ranking__valor">{{ p.unidades }} u.</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="est-card__vacio">Aún no se han vendido packs.</p>
+        }
+      </div>
+    </div>
+
+    <!-- Ventas por categoría -->
+    <div class="est-card">
+      <h2 class="est-card__seccion-titulo">Ventas por categoría</h2>
+      @if (d.ventasPorCategoria.length) {
+        <ul class="est-ranking">
+          @for (c of d.ventasPorCategoria; track c.categoria) {
+            <li class="est-ranking__item" [title]="c.categoria + ': ' + clp(c.ingresos) + ' · ' + c.unidades + ' unidades'">
+              <span class="est-ranking__nombre">
+                <span class="est-dot" [style.background]="colorCategoria(c.categoria)"></span>
+                <span class="est-ranking__texto">{{ c.categoria }}</span>
+              </span>
+              <div class="est-ranking__barra-wrap">
+                <div class="est-ranking__barra" [style.width.%]="(c.ingresos / maxIngresosCategoria()) * 100" [style.background]="colorCategoria(c.categoria)"></div>
+              </div>
+              <span class="est-ranking__valor">{{ clp(c.ingresos) }}</span>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="est-card__vacio">Sin datos de categorías todavía.</p>
+      }
+    </div>
+
+    <!-- Pedidos por estado -->
+    <div class="est-card">
+      <h2 class="est-card__seccion-titulo">Pedidos por estado</h2>
+      <div class="est-stacked">
+        @for (e of d.pedidosPorEstado; track e.estado) {
+          <div class="est-stacked__seg"
+            [style.width.%]="porcentaje(e.cantidad, totalPedidosEstado())"
+            [style.background]="colorEstado(e.estado)"
+            [title]="labelEstado(e.estado) + ': ' + e.cantidad"></div>
+        }
+      </div>
+      <ul class="est-leyenda">
+        @for (e of d.pedidosPorEstado; track e.estado) {
+          <li class="est-leyenda__item">
+            <span class="est-dot" [style.background]="colorEstado(e.estado)"></span>
+            {{ labelEstado(e.estado) }}
+            <strong>{{ e.cantidad }}</strong>
+            <span class="est-leyenda__pct">({{ porcentaje(e.cantidad, totalPedidosEstado()) }}%)</span>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <!-- Tendencia últimos 14 días -->
+    <div class="est-card">
+      <h2 class="est-card__seccion-titulo">Ventas · últimos 14 días</h2>
+      <div class="est-tendencia">
+        @for (dd of d.tendenciaVentas; track dd.fecha) {
+          <div class="est-tendencia__col" [title]="fechaCorta(dd.fecha) + ': ' + clp(dd.ventas) + ' · ' + dd.pedidos + ' pedidos'">
+            <div class="est-tendencia__barra" [style.height.%]="(dd.ventas / maxVentasTendencia()) * 100"></div>
+            <span class="est-tendencia__label">{{ fechaCorta(dd.fecha) }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Medios de pago y canal -->
+    <div class="est-grid-2">
+      <div class="est-card">
+        <h2 class="est-card__seccion-titulo">Medios de pago</h2>
+        @if (d.ventasPorMedioPago.length) {
+          <ul class="est-ranking">
+            @for (m of d.ventasPorMedioPago; track m.medio_pago) {
+              <li class="est-ranking__item" [title]="labelPago(m.medio_pago) + ': ' + clp(m.ventas) + ' · ' + m.cantidad + ' pedidos'">
+                <span class="est-ranking__nombre"><span class="est-ranking__texto">{{ labelPago(m.medio_pago) }}</span></span>
+                <div class="est-ranking__barra-wrap">
+                  <div class="est-ranking__barra est-ranking__barra--primario" [style.width.%]="(m.ventas / maxVentasMedioPago()) * 100"></div>
+                </div>
+                <span class="est-ranking__valor">{{ clp(m.ventas) }}</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="est-card__vacio">Sin datos todavía.</p>
+        }
+      </div>
+
+      <div class="est-card">
+        <h2 class="est-card__seccion-titulo">Canal de venta</h2>
+        @if (d.ventasPorCanal.length) {
+          <ul class="est-ranking">
+            @for (c of d.ventasPorCanal; track c.canal) {
+              <li class="est-ranking__item" [title]="labelCanal(c.canal) + ': ' + clp(c.ventas) + ' · ' + c.cantidad + ' pedidos'">
+                <span class="est-ranking__nombre"><span class="est-ranking__texto">{{ labelCanal(c.canal) }}</span></span>
+                <div class="est-ranking__barra-wrap">
+                  <div class="est-ranking__barra est-ranking__barra--acento" [style.width.%]="(c.ventas / maxVentasCanal()) * 100"></div>
+                </div>
+                <span class="est-ranking__valor">{{ clp(c.ventas) }}</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="est-card__vacio">Sin datos todavía.</p>
+        }
+      </div>
+    </div>
+  }
+  }
+</div>

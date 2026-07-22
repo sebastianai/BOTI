@@ -2,7 +2,9 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { TitleCasePipe } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { API_URL } from '../../core/api.config';
+import { SucursalesService, Sucursal } from '../../portal-cliente/services/sucursales.service';
 
 export interface PedidoItem {
   id: number;
@@ -35,10 +37,13 @@ export interface Pedido {
   fecha_entrega_estimada: string | null;
   fecha_entrega_real: string | null;
   total_items: number;
+  sucursal_id: number | null;
+  sucursal_nombre: string | null;
   items?: PedidoItem[];
 }
 
 type EstadoFiltro = 'todos' | 'pendiente' | 'confirmado' | 'en_camino' | 'entregado' | 'cancelado';
+type SucursalFiltro = 'todas' | 'sin_asignar' | number;
 
 @Component({
   selector: 'app-pedidos-admin',
@@ -49,16 +54,22 @@ type EstadoFiltro = 'todos' | 'pendiente' | 'confirmado' | 'en_camino' | 'entreg
 })
 export class PedidosAdminComponent implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly sucursalesService = inject(SucursalesService);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly pedidos      = signal<Pedido[]>([]);
+  protected readonly sucursales   = signal<Sucursal[]>([]);
   protected readonly cargando     = signal(true);
   protected readonly filtroEstado = signal<EstadoFiltro>('todos');
+  protected readonly filtroSucursal = signal<SucursalFiltro>('todas');
   protected readonly busqueda     = signal('');
   protected readonly detalle      = signal<Pedido | null>(null);
   protected readonly cargandoDet  = signal(false);
   protected readonly guardandoEst = signal(false);
   protected readonly notasInt     = signal('');
   protected readonly guardandoNot = signal(false);
+  protected readonly sucursalSel  = signal<number | null>(null);
+  protected readonly guardandoSuc = signal(false);
   protected readonly errorMsg     = signal('');
 
   protected readonly estadosFiltro: { valor: EstadoFiltro; label: string }[] = [
@@ -81,8 +92,11 @@ export class PedidosAdminComponent implements OnInit {
   protected readonly pedidosFiltrados = computed(() => {
     let lista = this.pedidos();
     const est = this.filtroEstado();
+    const suc = this.filtroSucursal();
     const bus = this.busqueda().toLowerCase().trim();
     if (est !== 'todos') lista = lista.filter(p => p.estado === est);
+    if (suc === 'sin_asignar') lista = lista.filter(p => p.sucursal_id === null);
+    else if (suc !== 'todas') lista = lista.filter(p => p.sucursal_id === suc);
     if (bus) lista = lista.filter(p =>
       p.nombre_cliente.toLowerCase().includes(bus) ||
       (p.numero_pedido ?? '').toLowerCase().includes(bus) ||
@@ -102,7 +116,14 @@ export class PedidosAdminComponent implements OnInit {
     };
   });
 
-  ngOnInit(): void { this.cargar(); }
+  ngOnInit(): void {
+    this.cargar();
+    this.sucursalesService.obtenerTodasAdmin().subscribe({ next: data => this.sucursales.set(data) });
+
+    const sucursalParam = this.route.snapshot.queryParamMap.get('sucursal');
+    if (sucursalParam === 'sin_asignar') this.filtroSucursal.set('sin_asignar');
+    else if (sucursalParam) this.filtroSucursal.set(Number(sucursalParam));
+  }
 
   protected cargar(): void {
     this.cargando.set(true);
@@ -116,14 +137,20 @@ export class PedidosAdminComponent implements OnInit {
     this.cargandoDet.set(true);
     this.detalle.set(pedido);
     this.notasInt.set(pedido.notas_internas ?? '');
+    this.sucursalSel.set(pedido.sucursal_id);
     this.http.get<Pedido>(`${API_URL}/pedidos/${pedido.id}`).subscribe({
-      next: full => { this.detalle.set(full); this.notasInt.set(full.notas_internas ?? ''); this.cargandoDet.set(false); },
+      next: full => {
+        this.detalle.set(full);
+        this.notasInt.set(full.notas_internas ?? '');
+        this.sucursalSel.set(full.sucursal_id);
+        this.cargandoDet.set(false);
+      },
       error: () => this.cargandoDet.set(false)
     });
   }
 
   protected cerrarDetalle(): void {
-    if (!this.guardandoEst() && !this.guardandoNot()) this.detalle.set(null);
+    if (!this.guardandoEst() && !this.guardandoNot() && !this.guardandoSuc()) this.detalle.set(null);
   }
 
   protected cambiarEstado(estado: string): void {
@@ -148,6 +175,26 @@ export class PedidosAdminComponent implements OnInit {
       next: () => this.guardandoNot.set(false),
       error: () => this.guardandoNot.set(false)
     });
+  }
+
+  protected guardarSucursal(): void {
+    const p = this.detalle();
+    if (!p || this.guardandoSuc()) return;
+    this.guardandoSuc.set(true);
+    this.http.put<Pedido>(`${API_URL}/pedidos/${p.id}/sucursal`, { sucursal_id: this.sucursalSel() }).subscribe({
+      next: updated => {
+        this.guardandoSuc.set(false);
+        this.detalle.set({ ...p, sucursal_id: updated.sucursal_id, sucursal_nombre: this.nombreSucursal(updated.sucursal_id) });
+        this.pedidos.update(lista => lista.map(x =>
+          x.id === updated.id ? { ...x, sucursal_id: updated.sucursal_id, sucursal_nombre: this.nombreSucursal(updated.sucursal_id) } : x
+        ));
+      },
+      error: err => { this.guardandoSuc.set(false); this.errorMsg.set(err?.error?.error || 'Error al asignar la sucursal'); }
+    });
+  }
+
+  private nombreSucursal(id: number | null): string | null {
+    return this.sucursales().find(s => s.id === id)?.nombre ?? null;
   }
 
   protected clp(n: number): string {

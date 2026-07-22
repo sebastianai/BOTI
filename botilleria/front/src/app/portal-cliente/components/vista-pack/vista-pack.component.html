@@ -39,12 +39,8 @@
             <ul class="vista-pack__productos-lista">
               @for (prod of p.productos; track prod.id) {
                 <li class="vista-pack__producto-item">
-                  <div class="vista-pack__producto-imagen" [style.background]="prod.imagen ? 'none' : prod.colorFondo">
-                    @if (prod.imagen) {
-                      <img [src]="urlImagen(prod.imagen)" [alt]="prod.nombre" />
-                    } @else {
-                      <span>{{ prod.emoji }}</span>
-                    }
+                  <div class="vista-pack__producto-imagen">
+                    <img [src]="urlImagen(prod.imagen)" [alt]="prod.nombre" />
                   </div>
                   <div class="vista-pack__producto-info">
                     <span class="vista-pack__producto-nombre">{{ prod.nombre }}</span>

@@ -1,0 +1,64 @@
+<button class="rc-volver" (click)="volverAEntrega()">← Volver</button>
+
+<div class="rc-pago">
+  <h3 class="rc-pago__titulo"><span>💳</span> Seleccione método de pago</h3>
+
+  <div class="rc-pago__metodos">
+    @for (m of metodosPago; track m.valor) {
+      <button
+        type="button"
+        class="rc-metodo-pago"
+        [class.rc-metodo-pago--sel]="metodoPago() === m.valor"
+        [style.background]="m.color"
+        [style.color]="m.textoColor"
+        (click)="seleccionarMetodoPago(m.valor)">
+        <span class="rc-metodo-pago__nombre">{{ m.nombre }}</span>
+        @if (m.sub) {
+          <span class="rc-metodo-pago__sub">{{ m.sub }}</span>
+        }
+      </button>
+    }
+  </div>
+
+  @if (intentoPago() && !metodoPago()) {
+    <span class="rc-datos__error">Selecciona un método de pago</span>
+  }
+
+  @if (metodoEntrega() === 'retiro' && sucursalActual()) {
+    <div class="rc-resumen-tienda">
+      <p class="rc-resumen-tienda__titulo"><span>🏬</span> Tienda de retiro</p>
+      <p><strong>Tienda:</strong> {{ sucursalActual()!.nombre }}</p>
+      <p><strong>Dirección:</strong> {{ sucursalActual()!.direccion }}</p>
+      <p><strong>Tipo de entrega:</strong> {{ tipoRetiro() === 'express' ? 'Express' : 'Programado' }}</p>
+      <p><strong>Fecha de retiro:</strong> {{ fechaRetiroCorta() }}</p>
+      <p><strong>Tipo de documento:</strong> {{ tipoDocumento() }}</p>
+    </div>
+  } @else if (metodoEntrega() === 'domicilio') {
+    <div class="rc-resumen-tienda">
+      <p class="rc-resumen-tienda__titulo"><span>🛵</span> Despacho a domicilio</p>
+      <p><strong>Dirección:</strong> {{ direccionEntrega() }}{{ depto() ? ', ' + depto() : '' }}</p>
+      <p><strong>Tipo de entrega:</strong> {{ tipoDespacho() === 'express' ? 'Express' : 'Programado' }}</p>
+      <p><strong>Fecha de despacho:</strong> {{ fechaDespachoCorta() }}</p>
+      <p><strong>Tipo de documento:</strong> {{ tipoDocumento() }}</p>
+    </div>
+  }
+
+  <label class="rc-pago__terminos">
+    <input type="checkbox" [checked]="aceptaTerminos()" (change)="toggleTerminos()" />
+    <span>
+      Acepto expresamente los <a href="javascript:void(0)">Términos y Condiciones</a> y la
+      <a href="javascript:void(0)">Política de Privacidad</a> de {{ portalConfig.config().nombre_negocio }}
+    </span>
+  </label>
+  @if (intentoPago() && !aceptaTerminos()) {
+    <span class="rc-datos__error">Debes aceptar los términos y condiciones</span>
+  }
+
+  <div class="rc-datos__acciones">
+    <button class="rc-login__btn" (click)="intentarPagar()">Ir a pagar →</button>
+  </div>
+</div>
+
+@if (mostrarProximamente()) {
+  <p class="rc-proximamente">✨ Esta función estará disponible muy pronto.</p>
+}

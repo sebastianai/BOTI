@@ -1,0 +1,129 @@
+@if (vistaContacto() === 'opciones') {
+  <div class="rc-contacto">
+    <div class="rc-login">
+      <h3 class="rc-login__titulo">Inicia sesión</h3>
+
+      <input
+        class="rc-login__input"
+        type="text"
+        placeholder="RUT"
+        [ngModel]="rut()"
+        (ngModelChange)="rut.set($event)" />
+
+      <input
+        class="rc-login__input"
+        type="password"
+        placeholder="Contraseña"
+        [ngModel]="contrasena()"
+        (ngModelChange)="contrasena.set($event)" />
+
+      <button class="rc-login__btn" (click)="continuar()">Continuar</button>
+
+      <p class="rc-login__aviso">¿No eres socio? <a href="javascript:void(0)">Inscríbete acá</a></p>
+      <p class="rc-login__aviso"><a href="javascript:void(0)">¿Olvidaste la contraseña?</a></p>
+    </div>
+
+    <button class="rc-invitado" (click)="continuarComoInvitado()">
+      🎩 Continuar como invitado
+    </button>
+  </div>
+} @else {
+  <button class="rc-volver" (click)="volverAOpciones()">← Volver</button>
+
+  <div class="rc-datos">
+    <div class="rc-datos__header">
+      <h3 class="rc-datos__titulo"><span>👤</span> Datos de identificación</h3>
+      <button
+        type="button"
+        class="rc-datos__factura"
+        [class.rc-datos__factura--activo]="quieroFactura()"
+        (click)="toggleFactura()">
+        ✏️ Quiero factura
+      </button>
+    </div>
+
+    <div class="rc-datos__campo rc-datos__campo--ancho">
+      <input
+        type="email"
+        placeholder="Correo electrónico"
+        [ngModel]="correo()"
+        (ngModelChange)="correo.set($event)" />
+      @if (intentoEnviar() && !correo().trim()) {
+        <span class="rc-datos__error">Ingresa tu correo electrónico</span>
+      }
+    </div>
+
+    <div class="rc-datos__fila">
+      <div class="rc-datos__campo">
+        <input
+          type="text"
+          placeholder="Nombre"
+          [ngModel]="nombre()"
+          (ngModelChange)="nombre.set($event)" />
+        @if (intentoEnviar() && !nombre().trim()) {
+          <span class="rc-datos__error">Requerido</span>
+        }
+      </div>
+      <div class="rc-datos__campo">
+        <input
+          type="text"
+          placeholder="Apellido"
+          [ngModel]="apellido()"
+          (ngModelChange)="apellido.set($event)" />
+        @if (intentoEnviar() && !apellido().trim()) {
+          <span class="rc-datos__error">Requerido</span>
+        }
+      </div>
+    </div>
+
+    <div class="rc-datos__fila">
+      <div class="rc-datos__campo">
+        <label class="rc-datos__label">Teléfono</label>
+        <input
+          type="tel"
+          [ngModel]="telefono()"
+          (ngModelChange)="telefono.set($event)" />
+        @if (intentoEnviar() && !telefono().trim()) {
+          <span class="rc-datos__error">Requerido</span>
+        }
+      </div>
+      <div class="rc-datos__campo">
+        <input
+          type="text"
+          placeholder="RUT"
+          [ngModel]="rutInvitado()"
+          (ngModelChange)="rutInvitado.set($event)" />
+        @if (intentoEnviar() && !rutInvitado().trim()) {
+          <span class="rc-datos__error">Requerido</span>
+        }
+      </div>
+    </div>
+
+    @if (quieroFactura()) {
+      <div class="rc-datos__fila">
+        <div class="rc-datos__campo">
+          <input
+            type="text"
+            placeholder="Razón social"
+            [ngModel]="razonSocial()"
+            (ngModelChange)="razonSocial.set($event)" />
+        </div>
+        <div class="rc-datos__campo">
+          <input
+            type="text"
+            placeholder="RUT empresa"
+            [ngModel]="rutEmpresa()"
+            (ngModelChange)="rutEmpresa.set($event)" />
+        </div>
+      </div>
+    }
+
+    <div class="rc-datos__acciones">
+      <button class="rc-login__btn" (click)="continuarDatosInvitado()">Continuar</button>
+    </div>
+  </div>
+}
+
+@if (mostrarProximamente()) {
+  <p class="rc-proximamente">✨ Esta función estará disponible muy pronto.</p>
+}

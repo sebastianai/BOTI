@@ -12,12 +12,8 @@
             [class.producto-card--agregado]="estaAgregado(p.id)"
             (click)="onProductoClick(p)">
 
-            <div class="producto-card__imagen" [style.background]="p.imagen ? 'none' : p.colorFondo">
-              @if (p.imagen) {
-                <img class="producto-card__foto" [src]="urlImagen(p.imagen)" [alt]="p.nombre" />
-              } @else {
-                <span class="producto-card__emoji">{{ p.emoji }}</span>
-              }
+            <div class="producto-card__imagen">
+              <img class="producto-card__foto" [src]="urlImagen(p.imagen)" [alt]="p.nombre" />
               <span class="producto-card__oferta-badge">{{ tipoLabel(promo.tipo) }}</span>
             </div>
 

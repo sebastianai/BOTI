@@ -19,6 +19,22 @@ export async function initDb(): Promise<void> {
     )
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clientes (
+      id                SERIAL PRIMARY KEY,
+      nombre            VARCHAR(100) NOT NULL,
+      apellido          VARCHAR(100) NOT NULL,
+      rut               VARCHAR(15)  UNIQUE NOT NULL,
+      correo            VARCHAR(255) UNIQUE NOT NULL,
+      telefono          VARCHAR(30),
+      fecha_nacimiento  DATE,
+      genero            VARCHAR(30),
+      contrasena        VARCHAR(255) NOT NULL,
+      activo            BOOLEAN      NOT NULL DEFAULT true,
+      creado_en         TIMESTAMP    NOT NULL DEFAULT NOW()
+    )
+  `);
+
   await pool.query(`ALTER TABLE productos ADD COLUMN IF NOT EXISTS top_ventas BOOLEAN NOT NULL DEFAULT false`);
 
   await pool.query(`ALTER TABLE productos ADD COLUMN IF NOT EXISTS promocion VARCHAR(50)`);
@@ -39,6 +55,7 @@ export async function initDb(): Promise<void> {
   `);
 
   await pool.query(`ALTER TABLE publicidad ADD COLUMN IF NOT EXISTS formato VARCHAR(20) NOT NULL DEFAULT 'escritorio'`);
+  await pool.query(`ALTER TABLE publicidad ADD COLUMN IF NOT EXISTS categoria_producto VARCHAR(100)`);
 
   const pubCount = await pool.query(`SELECT COUNT(*) FROM publicidad`);
   if (parseInt(pubCount.rows[0].count, 10) === 0) {
@@ -69,8 +86,34 @@ export async function initDb(): Promise<void> {
   `);
 
   await pool.query(`ALTER TABLE diseno_portal ADD COLUMN IF NOT EXISTS mapa_url TEXT`);
+  await pool.query(`ALTER TABLE diseno_portal ADD COLUMN IF NOT EXISTS instagram_url TEXT`);
+  await pool.query(`ALTER TABLE diseno_portal ADD COLUMN IF NOT EXISTS facebook_url TEXT`);
+  await pool.query(`ALTER TABLE diseno_portal ADD COLUMN IF NOT EXISTS nombre_pestana VARCHAR(60) NOT NULL DEFAULT 'MI BOTI'`);
 
   await pool.query(`INSERT INTO diseno_portal (id) VALUES (1) ON CONFLICT DO NOTHING`);
+
+  // ─── Sucursales ────────────────────────────────────────────────────────────
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS sucursales (
+      id          SERIAL PRIMARY KEY,
+      nombre      VARCHAR(150) NOT NULL,
+      direccion   VARCHAR(300) NOT NULL,
+      principal   BOOLEAN NOT NULL DEFAULT false,
+      activa      BOOLEAN NOT NULL DEFAULT true,
+      orden       INTEGER NOT NULL DEFAULT 0,
+      creado_en   TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  const sucursalesCount = await pool.query(`SELECT COUNT(*) FROM sucursales`);
+  if (parseInt(sucursalesCount.rows[0].count, 10) === 0) {
+    await pool.query(
+      `INSERT INTO sucursales (nombre, direccion, principal, activa, orden) VALUES
+        ('Casa Matriz', 'Combate naval 1545, Renca', true, true, 0),
+        ('Los Maquis',  'Los Maquis 1363, Renca, Santiago', false, true, 1)`
+    );
+    console.log('✅ Sucursales iniciales creadas');
+  }
 
   // ─── Pedidos ───────────────────────────────────────────────────────────────
   await pool.query(`
@@ -104,6 +147,9 @@ export async function initDb(): Promise<void> {
 
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_pedidos_estado ON pedidos(estado)`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_pedidos_fecha ON pedidos(fecha_pedido DESC)`);
+
+  await pool.query(`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS sucursal_id INTEGER REFERENCES sucursales(id) ON DELETE SET NULL`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_pedidos_sucursal ON pedidos(sucursal_id)`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS pedido_items (
@@ -151,6 +197,10 @@ export async function initDb(): Promise<void> {
       PRIMARY KEY (pack_id, producto_id)
     )
   `);
+
+  // Un pedido_item puede referenciar un producto individual o un pack (venta de pack completo)
+  await pool.query(`ALTER TABLE pedido_items ADD COLUMN IF NOT EXISTS pack_id INTEGER REFERENCES packs(id) ON DELETE SET NULL`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_pedido_items_pack ON pedido_items(pack_id)`);
 
   // ─── Seed 10 packs (solo si la tabla está vacía) ──────────────────────────
   const packsCount = await pool.query(`SELECT COUNT(*) FROM packs`);
@@ -223,6 +273,9 @@ export async function initDb(): Promise<void> {
     )
   `);
 
+  // Porcentaje de descuento aplicado a los productos cuando tipo = 'descuento'
+  await pool.query(`ALTER TABLE promos ADD COLUMN IF NOT EXISTS porcentaje_descuento NUMERIC(5,2)`);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS promo_productos (
       promo_id    INTEGER NOT NULL REFERENCES promos(id) ON DELETE CASCADE,
@@ -230,6 +283,9 @@ export async function initDb(): Promise<void> {
       PRIMARY KEY (promo_id, producto_id)
     )
   `);
+
+  // Un producto solo puede pertenecer a una promo a la vez
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_promo_productos_producto_unico ON promo_productos(producto_id)`);
 
   // ─── Productos y packs adicionales (migración safe) ──────────────────────
   const pId: Record<string, number> = {};
@@ -243,8 +299,8 @@ export async function initDb(): Promise<void> {
   ) => {
     const r = await pool.query(
       `INSERT INTO productos (nombre, marca, precio, precio_original, categoria, descripcion, grados, volumen, emoji, color_fondo, stock, top_ventas, promocion)
-       SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
-       WHERE NOT EXISTS (SELECT 1 FROM productos WHERE nombre = $1 AND marca = $2)
+       SELECT $1::varchar,$2::varchar,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
+       WHERE NOT EXISTS (SELECT 1 FROM productos WHERE nombre = $1::varchar AND marca = $2::varchar)
        RETURNING id`,
       [nombre, marca, precio, precioOriginal, categoria, descripcion, grados, volumen, emoji, colorFondo, stock, topVentas, promocion]
     );
@@ -286,8 +342,8 @@ export async function initDb(): Promise<void> {
   ) => {
     const r = await pool.query(
       `INSERT INTO packs (nombre, descripcion, precio, emoji, color_fondo, activo, orden)
-       SELECT $1,$2,$3,$4,$5,true,$6
-       WHERE NOT EXISTS (SELECT 1 FROM packs WHERE nombre = $1)
+       SELECT $1::varchar,$2,$3,$4,$5,true,$6
+       WHERE NOT EXISTS (SELECT 1 FROM packs WHERE nombre = $1::varchar)
        RETURNING id`,
       [nombre, descripcion, precio, emoji, colorFondo, orden]
     );
@@ -320,8 +376,11 @@ export async function initDb(): Promise<void> {
     const prods = await pool.query(
       `SELECT id, nombre, categoria, precio FROM productos ORDER BY id LIMIT 12`
     );
+    const packsSeed = await pool.query(
+      `SELECT id, nombre, precio FROM packs ORDER BY id LIMIT 8`
+    );
     if (prods.rows.length > 0) {
-      await seedPedidos(prods.rows);
+      await seedPedidos(prods.rows, packsSeed.rows);
       console.log('✅ 20 pedidos de prueba creados');
     }
   }
@@ -340,38 +399,41 @@ export async function initDb(): Promise<void> {
 
 // ─── Helper: seed pedidos de prueba ──────────────────────────────────────────
 type ProdRow = { id: number; nombre: string; categoria: string; precio: string };
+type PackRow = { id: number; nombre: string; precio: number };
 
-async function seedPedidos(prods: ProdRow[]): Promise<void> {
+async function seedPedidos(prods: ProdRow[], packs: PackRow[]): Promise<void> {
   const pick = (i: number): ProdRow => prods[i % prods.length];
+  const pickPack = (i: number): PackRow => packs[i % packs.length];
 
   type SeedOrder = {
     nombre: string; rut?: string; tel?: string; email?: string; dir?: string;
     estado: string; pago: string; canal: string;
     items: Array<[number, number]>;
+    packs?: Array<[number, number]>;
     envio?: number; notas?: string; diasAtras: number;
   };
 
   const orders: SeedOrder[] = [
-    { nombre: 'Ana García Soto',     rut: '12.345.678-9', tel: '+56 9 8123 4567', email: 'ana@gmail.com',       dir: 'Av. Providencia 1234, Providencia',   estado: 'entregado',   pago: 'webpay',          canal: 'portal',      items: [[0,2],[2,1],[4,1]], envio: 2990, notas: 'Llamar antes de entregar', diasAtras: 15 },
+    { nombre: 'Ana García Soto',     rut: '12.345.678-9', tel: '+56 9 8123 4567', email: 'ana@gmail.com',       dir: 'Av. Providencia 1234, Providencia',   estado: 'entregado',   pago: 'webpay',          canal: 'portal',      items: [[0,2],[2,1],[4,1]], packs: [[0,1]],       envio: 2990, notas: 'Llamar antes de entregar', diasAtras: 15 },
     { nombre: 'Carlos Rodríguez',    rut: '11.222.333-4', tel: '+56 9 9876 5432',                               dir: 'Los Leones 456, Ñuñoa',               estado: 'entregado',   pago: 'efectivo',        canal: 'presencial',  items: [[1,1],[3,2]],       envio: 0,                                          diasAtras: 12 },
     { nombre: 'María González',                           tel: '+56 9 7654 3210', email: 'maria@hotmail.com',   dir: 'Irarrázaval 789, Ñuñoa',              estado: 'entregado',   pago: 'transferencia',   canal: 'portal',      items: [[0,1],[5,2]],       envio: 1990,                                       diasAtras: 10 },
-    { nombre: 'Pedro Martínez Vega', rut: '9.876.543-2',  tel: '+56 9 6543 2109',                               dir: 'Av. Italia 321, Santiago',            estado: 'confirmado',  pago: 'tarjeta_debito',  canal: 'portal',      items: [[2,3],[6,1]],       envio: 2990,                                       diasAtras: 4  },
+    { nombre: 'Pedro Martínez Vega', rut: '9.876.543-2',  tel: '+56 9 6543 2109',                               dir: 'Av. Italia 321, Santiago',            estado: 'confirmado',  pago: 'tarjeta_debito',  canal: 'portal',      items: [[2,3],[6,1]],       packs: [[0,2]],       envio: 2990,                                       diasAtras: 4  },
     { nombre: 'Valentina López',                          tel: '+56 9 5432 1098', email: 'vale@gmail.com',      dir: 'Grecia 654, Ñuñoa',                   estado: 'en_camino',   pago: 'webpay',          canal: 'portal',      items: [[3,2],[1,4]],       envio: 2990, notas: 'Dejar en portería',          diasAtras: 1  },
     { nombre: 'Sebastián Hernández', rut: '15.678.901-k', tel: '+56 9 4321 0987', email: 'seba@gmail.com',      dir: 'Av. Irarrázaval 112, Macul',          estado: 'pendiente',   pago: 'webpay',          canal: 'portal',      items: [[4,2],[7,1]],       envio: 2990,                                       diasAtras: 0  },
     { nombre: 'Camila Torres',                            tel: '+56 9 3210 9876',                               dir: 'Los Quillayes 234, La Florida',       estado: 'pendiente',   pago: 'efectivo',        canal: 'whatsapp',    items: [[5,1],[0,2],[3,1]], envio: 0,    notas: 'Confirmar disponibilidad',  diasAtras: 0  },
     { nombre: 'Andrés Díaz Muñoz',   rut: '13.456.789-0', tel: '+56 9 2109 8765', email: 'andres@empresa.cl',   dir: 'Tobalaba 567, Providencia',           estado: 'confirmado',  pago: 'tarjeta_credito', canal: 'portal',      items: [[6,2],[8,3]],       envio: 1990,                                       diasAtras: 3  },
-    { nombre: 'Javiera Morales',                          tel: '+56 9 1098 7654', email: 'javiera@gmail.com',   dir: 'Av. Matta 890, Santiago',             estado: 'entregado',   pago: 'transferencia',   canal: 'portal',      items: [[7,1],[2,2],[9,2]], envio: 2990,                                       diasAtras: 8  },
+    { nombre: 'Javiera Morales',                          tel: '+56 9 1098 7654', email: 'javiera@gmail.com',   dir: 'Av. Matta 890, Santiago',             estado: 'entregado',   pago: 'transferencia',   canal: 'portal',      items: [[7,1],[2,2],[9,2]], packs: [[0,1],[2,1]], envio: 2990,                                       diasAtras: 8  },
     { nombre: 'Diego Fuentes Araya', rut: '14.567.890-1', tel: '+56 9 0987 6543',                               dir: 'Pedro de Valdivia 45, Providencia',   estado: 'cancelado',   pago: 'webpay',          canal: 'portal',      items: [[8,3]],             envio: 2990, notas: 'Producto sin stock',         diasAtras: 20 },
     { nombre: 'Sofía Reyes',                              tel: '+56 9 9876 1234', email: 'sofia@gmail.com',     dir: 'Manquehue Sur 789, Las Condes',       estado: 'pendiente',   pago: 'efectivo',        canal: 'telefono',    items: [[9,2],[0,1]],       envio: 0,                                          diasAtras: 0  },
-    { nombre: 'Matías Arenas',       rut: '10.111.222-3', tel: '+56 9 8765 2345',                               dir: 'Av. Ossa 123, Peñalolén',             estado: 'en_camino',   pago: 'transferencia',   canal: 'portal',      items: [[10,1],[4,2]],      envio: 3990,                                       diasAtras: 1  },
+    { nombre: 'Matías Arenas',       rut: '10.111.222-3', tel: '+56 9 8765 2345',                               dir: 'Av. Ossa 123, Peñalolén',             estado: 'en_camino',   pago: 'transferencia',   canal: 'portal',      items: [[10,1],[4,2]],      packs: [[1,1]],       envio: 3990,                                       diasAtras: 1  },
     { nombre: 'Isidora Vargas',                           tel: '+56 9 7654 3456', email: 'isi@hotmail.com',     dir: 'El Bosque Norte 500, Las Condes',     estado: 'confirmado',  pago: 'webpay',          canal: 'portal',      items: [[11,4],[2,1]],      envio: 1990, notas: 'Regalo, envolver por favor', diasAtras: 5  },
     { nombre: 'Nicolás Castro',      rut: '16.789.012-3', tel: '+56 9 6543 4567',                               dir: 'Gran Avenida 2000, San Miguel',       estado: 'entregado',   pago: 'efectivo',        canal: 'presencial',  items: [[0,6]],             envio: 0,                                          diasAtras: 7  },
     { nombre: 'Constanza Mejías',                         tel: '+56 9 5432 5678', email: 'coni@gmail.com',      dir: 'Av. Departamental 400, San Joaquín',  estado: 'cancelado',   pago: 'transferencia',   canal: 'whatsapp',    items: [[3,2],[5,3]],       envio: 0,    notas: 'No respondió confirmación', diasAtras: 18 },
     { nombre: 'Felipe Muñoz Lagos',  rut: '12.890.123-4', tel: '+56 9 4321 6789', email: 'felipe@gmail.com',    dir: 'Vicuña Mackenna 1100, La Florida',    estado: 'pendiente',   pago: 'webpay',          canal: 'portal',      items: [[6,1],[8,2],[10,1]],envio: 2990,                                       diasAtras: 0  },
-    { nombre: 'Catalina Soto',                            tel: '+56 9 3210 7890',                               dir: 'Av. Vitacura 3400, Vitacura',         estado: 'entregado',   pago: 'tarjeta_credito', canal: 'portal',      items: [[1,2],[7,3]],       envio: 1990,                                       diasAtras: 6  },
+    { nombre: 'Catalina Soto',                            tel: '+56 9 3210 7890',                               dir: 'Av. Vitacura 3400, Vitacura',         estado: 'entregado',   pago: 'tarjeta_credito', canal: 'portal',      items: [[1,2],[7,3]],       packs: [[0,1]],       envio: 1990,                                       diasAtras: 6  },
     { nombre: 'Emilio Pérez Ruiz',   rut: '8.765.432-1',  tel: '+56 9 2109 8901', email: 'emilio@empresa.cl',   dir: 'Apoquindo 4500, Las Condes',          estado: 'en_camino',   pago: 'tarjeta_debito',  canal: 'portal',      items: [[9,5],[3,2]],       envio: 0,                                          diasAtras: 2  },
     { nombre: 'Paula Aguilera',                           tel: '+56 9 1098 9012', email: 'paula@hotmail.com',   dir: 'Av. Los Presidentes 234, Vitacura',   estado: 'pendiente',   pago: 'efectivo',        canal: 'presencial',  items: [[11,2],[0,3]],      envio: 0,                                          diasAtras: 0  },
-    { nombre: 'Roberto Carrasco',    rut: '17.890.123-5', tel: '+56 9 0987 0123',                               dir: 'Av. La Florida 8900, La Florida',     estado: 'confirmado',  pago: 'transferencia',   canal: 'portal',      items: [[4,3],[6,2],[9,1]], envio: 2990, notas: 'Entregar tarde',             diasAtras: 3  },
+    { nombre: 'Roberto Carrasco',    rut: '17.890.123-5', tel: '+56 9 0987 0123',                               dir: 'Av. La Florida 8900, La Florida',     estado: 'confirmado',  pago: 'transferencia',   canal: 'portal',      items: [[4,3],[6,2],[9,1]], packs: [[3,1],[0,1]], envio: 2990, notas: 'Entregar tarde',             diasAtras: 3  },
   ];
 
   for (const o of orders) {
@@ -381,6 +443,12 @@ async function seedPedidos(prods: ProdRow[]): Promise<void> {
       const itemSub = Math.round(parseFloat(prod.precio) * cant);
       subtotal += itemSub;
       return { prod, cant, itemSub };
+    });
+    const packItemsCalc = (o.packs ?? []).map(([idx, cant]) => {
+      const pack = pickPack(idx);
+      const itemSub = Math.round(pack.precio * cant);
+      subtotal += itemSub;
+      return { pack, cant, itemSub };
     });
     const envio = o.envio ?? 0;
     const total = subtotal + envio;
@@ -409,6 +477,14 @@ async function seedPedidos(prods: ProdRow[]): Promise<void> {
         `INSERT INTO pedido_items (pedido_id, producto_id, nombre_producto, categoria, precio_unitario, cantidad, subtotal)
          VALUES ($1,$2,$3,$4,$5,$6,$7)`,
         [id, prod.id, prod.nombre, prod.categoria, parseFloat(prod.precio), cant, itemSub]
+      );
+    }
+
+    for (const { pack, cant, itemSub } of packItemsCalc) {
+      await pool.query(
+        `INSERT INTO pedido_items (pedido_id, pack_id, nombre_producto, categoria, precio_unitario, cantidad, subtotal)
+         VALUES ($1,$2,$3,'Pack',$4,$5,$6)`,
+        [id, pack.id, pack.nombre, pack.precio, cant, itemSub]
       );
     }
   }

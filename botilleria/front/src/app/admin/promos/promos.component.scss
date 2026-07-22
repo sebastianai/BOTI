@@ -264,11 +264,22 @@
     cursor: pointer;
     border-bottom: 1px solid var(--c-border);
     transition: var(--transition);
+    flex-wrap: wrap;
 
     &:last-child { border-bottom: none; }
     &:hover { background: var(--c-surface-alt); }
 
     &--sel { background: color-mix(in srgb, var(--c-primary) 6%, transparent); }
+
+    &--bloqueado {
+      cursor: not-allowed;
+      &:hover { background: none; }
+
+      .promo-form__producto-nombre,
+      .promo-form__producto-cat {
+        color: var(--c-text-muted);
+      }
+    }
 
     input[type="checkbox"] {
       width: 15px;
@@ -276,6 +287,8 @@
       accent-color: var(--c-primary);
       flex-shrink: 0;
       cursor: pointer;
+
+      &:disabled { cursor: not-allowed; }
     }
   }
 
@@ -295,6 +308,27 @@
     flex-shrink: 0;
   }
 
+  &__badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+
+    &--promo {
+      background: color-mix(in srgb, #eab308 20%, transparent);
+      color: #92660a;
+    }
+
+    &--descuento {
+      background: color-mix(in srgb, #dc3545 10%, transparent);
+      color: #dc3545;
+    }
+  }
+
   &__vacio {
     padding: 20px;
     text-align: center;
@@ -312,6 +346,12 @@
     font-size: 13px;
     color: #dc3545;
     margin-bottom: 12px;
+  }
+
+  &__hint {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--c-text-muted);
   }
 
   &__acciones {

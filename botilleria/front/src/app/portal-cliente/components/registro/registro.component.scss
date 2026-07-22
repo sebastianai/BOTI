@@ -1,0 +1,230 @@
+.registro {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+
+  &__volver {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--c-text-muted);
+    padding: 0;
+    margin-bottom: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s;
+
+    &:hover { color: var(--c-text); }
+  }
+
+  &__card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-top: 4px solid var(--c-accent);
+    border-radius: var(--radius-lg);
+    padding: 32px 32px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__titulo {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--c-primary);
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  &__fila {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+
+    @media (max-width: 560px) { grid-template-columns: 1fr; }
+  }
+
+  &__campo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    input, .registro__telefono {
+      padding: 12px 14px;
+      border: 1.5px solid var(--c-border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--c-text);
+      background: var(--c-surface);
+      transition: var(--transition);
+      width: 100%;
+
+      &:focus { border-color: var(--c-primary); outline: none; }
+    }
+
+    input[type="date"] {
+      color: var(--c-text-muted);
+      &:valid { color: var(--c-text); }
+    }
+  }
+
+  &__telefono {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 !important;
+
+    input {
+      border: none !important;
+      padding: 12px 14px 12px 0 !important;
+    }
+  }
+
+  &__bandera {
+    font-size: 18px;
+    padding-left: 14px;
+  }
+
+  &__genero {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+
+    &-titulo {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--c-text);
+      width: 100%;
+    }
+  }
+
+  &__radio {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--c-text);
+    cursor: pointer;
+
+    input {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--c-primary);
+      cursor: pointer;
+    }
+  }
+
+  &__check {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--c-text);
+    cursor: pointer;
+    line-height: 1.4;
+
+    input {
+      margin-top: 3px;
+      width: 15px;
+      height: 15px;
+      accent-color: var(--c-primary);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    a {
+      color: var(--c-primary);
+      font-weight: 600;
+      text-decoration: underline;
+    }
+  }
+
+  &__recaptcha {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+    background: var(--c-surface-alt);
+    font-size: 14px;
+    color: var(--c-text);
+    cursor: pointer;
+    width: fit-content;
+
+    input {
+      width: 22px;
+      height: 22px;
+      accent-color: var(--c-primary);
+      cursor: pointer;
+    }
+
+    &-badge {
+      margin-left: auto;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--c-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  &__error {
+    font-size: 11.5px;
+    color: #dc3545;
+    font-weight: 600;
+
+    &--general {
+      text-align: center;
+      font-size: 13px;
+    }
+  }
+
+  &__btn {
+    padding: 14px;
+    background: var(--c-accent);
+    color: var(--c-primary-dark);
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 700;
+    transition: var(--transition);
+    margin-top: 4px;
+
+    &:hover:not(:disabled) { background: var(--c-accent-light); }
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    &--secundario {
+      background: var(--c-surface-alt);
+      color: var(--c-text);
+      border: 1px solid var(--c-border);
+
+      &:hover:not(:disabled) { background: var(--c-border); }
+    }
+  }
+
+  &__exito {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    padding: 30px 10px;
+
+    &-emoji { font-size: 44px; line-height: 1; }
+
+    &-texto {
+      font-size: 14px;
+      color: var(--c-text-muted);
+      max-width: 380px;
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    .registro__btn { width: 100%; max-width: 260px; }
+  }
+}

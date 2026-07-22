@@ -1,0 +1,124 @@
+<div class="categoria">
+  <app-breadcrumb [items]="breadcrumbItems()" />
+
+  <div class="section-title categoria__titulo-row">
+    <h1 class="categoria__titulo">{{ nombreCategoria() }}</h1>
+  </div>
+
+  <div class="categoria__toolbar">
+    <span class="categoria__count">{{ productosFiltrados().length }} productos</span>
+    <select class="categoria__orden" (change)="onOrden($event)" aria-label="Ordenar">
+      <option value="default">Orden: Predeterminado</option>
+      <option value="precio-asc">Precio: Menor a Mayor</option>
+      <option value="precio-desc">Precio: Mayor a Menor</option>
+    </select>
+  </div>
+
+  <div class="categoria__layout">
+    <aside class="categoria__sidebar">
+      <div class="categoria__filtro">
+        <button type="button" class="categoria__filtro-header" (click)="togglePrecio()">
+          <span>PRECIO</span>
+          <span class="categoria__chevron" [class.categoria__chevron--abierto]="precioAbierto()">⌄</span>
+        </button>
+        @if (precioAbierto()) {
+          <div class="categoria__filtro-body">
+            <div class="categoria__precio-campos">
+              <input type="number" min="0" placeholder="Mínimo" (input)="onPrecioMinChange($event)" />
+              <span>—</span>
+              <input type="number" min="0" placeholder="Máximo" (input)="onPrecioMaxChange($event)" />
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="categoria__filtro">
+        <button type="button" class="categoria__filtro-header" (click)="toggleMarcasPanel()">
+          <span>MARCAS</span>
+          <span class="categoria__chevron" [class.categoria__chevron--abierto]="marcasAbierto()">⌄</span>
+        </button>
+        @if (marcasAbierto()) {
+          <div class="categoria__filtro-body">
+            @for (marca of marcasDisponibles(); track marca) {
+              <label class="categoria__check">
+                <input type="checkbox" [checked]="marcasSeleccionadas().has(marca)" (change)="toggleMarca(marca)" />
+                {{ marca }}
+              </label>
+            } @empty {
+              <span class="categoria__filtro-vacio">Sin marcas disponibles</span>
+            }
+          </div>
+        }
+      </div>
+
+      @if (filtrosActivos() > 0) {
+        <button type="button" class="categoria__limpiar" (click)="limpiarFiltros()">✕ Limpiar filtros</button>
+      }
+
+      @if (bannerActual(); as ad) {
+        <div class="categoria__banner">
+          @if (ad.enlace) {
+            <a [href]="ad.enlace" target="_blank" rel="noopener">
+              <img [src]="publicidadService.imagenUrl(ad.imagen_url)" [alt]="ad.titulo || nombreCategoria()" />
+            </a>
+          } @else {
+            <img [src]="publicidadService.imagenUrl(ad.imagen_url)" [alt]="ad.titulo || nombreCategoria()" />
+          }
+        </div>
+      }
+    </aside>
+
+    <div class="categoria__productos">
+      @if (cargando()) {
+        <app-vasos-loading mensaje="Cargando productos..." />
+      } @else if (productosFiltrados().length === 0) {
+        <div class="categoria__vacio">
+          <span>🔍</span>
+          <p>No encontramos productos con estos filtros</p>
+          @if (filtrosActivos() > 0) {
+            <button type="button" class="categoria__limpiar" (click)="limpiarFiltros()">Limpiar filtros</button>
+          }
+        </div>
+      } @else {
+        <div class="categoria__grid">
+          @for (producto of productosFiltrados(); track producto.id) {
+            <article class="producto-card" [class.producto-card--agregado]="estaAgregado(producto.id)" (click)="onProductoClick(producto)">
+              <div class="producto-card__imagen">
+                <img class="producto-card__foto" [src]="urlImagenProducto(producto.imagen)" [alt]="producto.nombre" />
+                @if (badgeLabel(producto); as label) {
+                  <span class="producto-card__oferta-badge">{{ label }}</span>
+                }
+              </div>
+              <div class="producto-card__body">
+                <div class="producto-card__meta">
+                  <span class="producto-card__categoria">{{ producto.categoria }}</span>
+                  @if (producto.grados > 0) {
+                    <span class="producto-card__grados">{{ producto.grados }}°</span>
+                  }
+                </div>
+                <h3 class="producto-card__nombre">{{ producto.nombre }}</h3>
+                <p class="producto-card__marca">{{ producto.marca }}</p>
+                <div class="producto-card__volumen"><span>{{ producto.volumen }}</span></div>
+                <div class="producto-card__footer">
+                  <div class="producto-card__precios">
+                    @if (producto.precioOriginal) {
+                      <span class="producto-card__precio-original">{{ formatearPrecio(producto.precioOriginal) }}</span>
+                    }
+                    <span class="producto-card__precio">{{ formatearPrecio(producto.precio) }}</span>
+                  </div>
+                  <button
+                    class="producto-card__btn"
+                    [class.producto-card__btn--agregado]="estaAgregado(producto.id)"
+                    (click)="agregarAlCarrito(producto); $event.stopPropagation()"
+                    [disabled]="estaAgregado(producto.id)">
+                    @if (estaAgregado(producto.id)) { <span>✓ Agregado</span> } @else { <span>+ Agregar</span> }
+                  </button>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>

@@ -1,0 +1,124 @@
+<div class="suc-admin">
+  <header class="suc-admin__header">
+    <div>
+      <h1 class="suc-admin__titulo">Sucursales</h1>
+      <p class="suc-admin__subtitulo">Gestiona las tiendas disponibles para retiro y despacho</p>
+    </div>
+    <button class="btn btn--primary" (click)="abrirNuevo()">+ Nueva sucursal</button>
+  </header>
+
+  @if (errorMsg()) {
+    <div class="suc-admin__alerta">{{ errorMsg() }}</div>
+  }
+
+  @if (cargando()) {
+    <div class="suc-admin__estado">Cargando sucursales…</div>
+  } @else if (sucursales().length === 0) {
+    <div class="suc-admin__estado">No hay sucursales. Crea la primera.</div>
+  } @else {
+    <div class="suc-tabla-wrap">
+      <table class="suc-tabla">
+        <thead>
+          <tr>
+            <th>Sucursal</th>
+            <th>Dirección</th>
+            <th>Orden</th>
+            <th>Pedidos</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (s of sucursales(); track s.id) {
+            <tr [class.suc-tabla__fila--inactiva]="!s.activa">
+              <td>
+                <span class="suc-tabla__nombre">🏬 {{ s.nombre }}</span>
+                @if (s.principal) {
+                  <span class="suc-badge suc-badge--principal">Principal</span>
+                }
+              </td>
+              <td class="suc-tabla__sub">{{ s.direccion }}</td>
+              <td class="suc-tabla__centro">{{ s.orden }}</td>
+              <td class="suc-tabla__centro">
+                @if (s.total_pedidos) {
+                  <a class="suc-badge suc-badge--pedidos" [routerLink]="['/admin/pedidos']" [queryParams]="{ sucursal: s.id }">
+                    {{ s.total_pedidos }}
+                  </a>
+                } @else {
+                  <span class="suc-tabla__sub">0</span>
+                }
+              </td>
+              <td>
+                <button
+                  class="suc-toggle"
+                  [class.suc-toggle--activo]="s.activa"
+                  (click)="toggleActiva(s)"
+                  [title]="s.activa ? 'Ocultar del portal' : 'Mostrar en portal'">
+                  {{ s.activa ? '✅ Activa' : '⭕ Inactiva' }}
+                </button>
+              </td>
+              <td class="suc-tabla__acciones">
+                <button class="btn btn--secundario btn--sm" (click)="abrirEditar(s)">✏️ Editar</button>
+                <button class="btn btn--peligro btn--sm" (click)="eliminar(s)">🗑️</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+@if (modalAbierto()) {
+  <div class="suc-modal-overlay" (click)="cerrar()">
+    <div class="suc-modal" (click)="$event.stopPropagation()">
+      <div class="suc-modal__header">
+        <h2>{{ idEditando() ? 'Editar sucursal' : 'Nueva sucursal' }}</h2>
+        <button class="suc-modal__close" (click)="cerrar()">✕</button>
+      </div>
+      <form class="suc-form" [formGroup]="form" (ngSubmit)="guardar()">
+        <div class="suc-form__campo">
+          <label>Nombre</label>
+          <input type="text" formControlName="nombre" placeholder="Ej: Casa Matriz" />
+          @if (form.get('nombre')?.invalid && form.get('nombre')?.touched) {
+            <span class="suc-form__campo-error">Requerido</span>
+          }
+        </div>
+        <div class="suc-form__campo">
+          <label>Dirección</label>
+          <input type="text" formControlName="direccion" placeholder="Ej: Av. Siempre Viva 123, Comuna" />
+          @if (form.get('direccion')?.invalid && form.get('direccion')?.touched) {
+            <span class="suc-form__campo-error">Requerido</span>
+          }
+        </div>
+        <div class="suc-form__grid2">
+          <div class="suc-form__campo">
+            <label>Orden</label>
+            <input type="number" formControlName="orden" min="0" />
+          </div>
+          <div class="suc-form__campo suc-form__campo--check">
+            <label>
+              <input type="checkbox" formControlName="activa" />
+              Visible en el portal
+            </label>
+          </div>
+          <div class="suc-form__campo suc-form__campo--check">
+            <label>
+              <input type="checkbox" formControlName="principal" />
+              Sucursal principal
+            </label>
+          </div>
+        </div>
+        @if (errorMsg()) {
+          <div class="suc-form__error">{{ errorMsg() }}</div>
+        }
+        <div class="suc-form__acciones">
+          <button type="button" class="btn btn--secundario" (click)="cerrar()">Cancelar</button>
+          <button type="submit" class="btn btn--primary" [disabled]="guardando()">
+            {{ guardando() ? 'Guardando...' : (idEditando() ? 'Guardar cambios' : 'Crear sucursal') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

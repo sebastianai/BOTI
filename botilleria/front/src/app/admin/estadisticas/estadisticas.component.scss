@@ -1,0 +1,290 @@
+.est-admin {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 60px;
+
+  @media (max-width: 767px) { padding: 20px 16px 40px; }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  &__titulo    { font-size: 24px; font-weight: 800; color: var(--c-text); }
+  &__subtitulo { font-size: 14px; color: var(--c-text-muted); margin-top: 4px; }
+
+  &__alerta {
+    background: color-mix(in srgb, #dc3545 8%, transparent);
+    color: #dc3545;
+    border: 1px solid color-mix(in srgb, #dc3545 25%, transparent);
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+
+  &__loading {
+    text-align: center;
+    padding: 60px 0;
+    color: var(--c-text-muted);
+    font-size: 14px;
+  }
+}
+
+.btn {
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  transition: var(--transition);
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  color: var(--c-text);
+  cursor: pointer;
+
+  &:hover { background: var(--c-surface-alt); }
+}
+
+// ─── KPIs ──────────────────────────────────────────────────────────────────
+.est-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+
+  @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 540px) { grid-template-columns: 1fr; }
+}
+
+.est-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 20px;
+  border-radius: var(--radius-md);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+
+  &__label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--c-text-muted); }
+  &__valor { font-size: 24px; font-weight: 800; color: var(--c-text); line-height: 1.2; }
+  &__sub   { font-size: 12px; color: var(--c-text-muted); }
+
+  &__badge {
+    display: inline-flex;
+    align-self: flex-start;
+    font-size: 11px;
+    font-weight: 700;
+    color: #15803d;
+    background: color-mix(in srgb, #15803d 12%, transparent);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+
+    &--neg { color: #dc3545; background: color-mix(in srgb, #dc3545 12%, transparent); }
+  }
+}
+
+// ─── Cards genéricos ───────────────────────────────────────────────────────
+.est-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  padding: 20px 22px;
+  margin-bottom: 20px;
+
+  &__seccion-titulo {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--c-text-muted);
+    margin-bottom: 16px;
+  }
+
+  &__vacio {
+    font-size: 13px;
+    color: var(--c-text-muted);
+    padding: 8px 0;
+  }
+
+  &--destacado {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  &__icono { font-size: 30px; line-height: 1; }
+
+  &__header-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__titulo { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--c-text-muted); }
+  &__nombre { font-size: 18px; font-weight: 800; color: var(--c-text); }
+  &__meta   { font-size: 13px; color: var(--c-text-muted); }
+}
+
+.est-destacados {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+
+  @media (max-width: 800px) { grid-template-columns: 1fr; }
+}
+
+.est-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 800px) { grid-template-columns: 1fr; }
+
+  .est-card { margin-bottom: 0; }
+}
+
+// ─── Ranking (barras horizontales) ────────────────────────────────────────
+.est-ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  &__item {
+    display: grid;
+    grid-template-columns: minmax(100px, 38%) 1fr auto;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__nombre {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--c-text);
+  }
+
+  &__texto {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__barra-wrap {
+    background: var(--c-surface-alt);
+    border-radius: var(--radius-pill);
+    height: 10px;
+    overflow: hidden;
+  }
+
+  &__barra {
+    height: 100%;
+    border-radius: var(--radius-pill);
+    min-width: 4px;
+    transition: width 0.3s ease;
+
+    &--primario { background: var(--c-primary); }
+    &--acento   { background: var(--c-accent); }
+  }
+
+  &__valor {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--c-text-muted);
+    white-space: nowrap;
+    text-align: right;
+    min-width: 70px;
+  }
+}
+
+.est-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+// ─── Pedidos por estado (barra apilada) ───────────────────────────────────
+.est-stacked {
+  display: flex;
+  width: 100%;
+  height: 14px;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--c-surface-alt);
+  margin-bottom: 16px;
+
+  &__seg {
+    height: 100%;
+    border-right: 2px solid var(--c-surface);
+
+    &:last-child { border-right: none; }
+  }
+}
+
+.est-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 20px;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--c-text-muted);
+
+    strong { color: var(--c-text); }
+  }
+
+  &__pct { color: var(--c-text-muted); }
+}
+
+// ─── Tendencia (barras verticales) ────────────────────────────────────────
+.est-tendencia {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 140px;
+  padding-top: 8px;
+
+  &__col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    gap: 6px;
+  }
+
+  &__barra {
+    width: 100%;
+    max-width: 26px;
+    min-height: 3px;
+    background: var(--c-primary);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.3s ease;
+  }
+
+  &__label {
+    font-size: 10px;
+    color: var(--c-text-muted);
+    white-space: nowrap;
+  }
+}

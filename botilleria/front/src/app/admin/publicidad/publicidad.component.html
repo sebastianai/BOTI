@@ -46,6 +46,9 @@
               <span class="pub-card__formato pub-card__formato--{{ item.formato }}">
                 {{ item.formato === 'escritorio' ? '🖥️ Escritorio' : '📱 Móvil' }}
               </span>
+              @if (item.categoria_producto) {
+                <span class="pub-card__categoria">🏷️ {{ item.categoria_producto }}</span>
+              }
               <button
                 class="pub-card__toggle"
                 [class.pub-card__toggle--activo]="item.activo"
@@ -108,6 +111,16 @@
         <div class="pub-form__campo">
           <label>Enlace (opcional)</label>
           <input type="url" formControlName="enlace" placeholder="https://..." />
+        </div>
+        <div class="pub-form__campo">
+          <label>Categoría de producto (opcional)</label>
+          <select formControlName="categoria_producto">
+            <option value="">General (carrusel del inicio)</option>
+            @for (cat of categorias(); track cat.id) {
+              <option [value]="cat.id">{{ cat.emoji }} {{ cat.nombre }}</option>
+            }
+          </select>
+          <small class="pub-form__ayuda">Si eliges una categoría, este banner se muestra en el panel lateral de esa categoría (solo escritorio) en vez del carrusel del inicio.</small>
         </div>
         <div class="pub-form__grid2">
           <div class="pub-form__campo">

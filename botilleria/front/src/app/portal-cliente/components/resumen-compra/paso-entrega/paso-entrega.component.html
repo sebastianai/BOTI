@@ -1,0 +1,294 @@
+@if (vistaEntrega() === 'metodo') {
+  <button class="rc-volver" (click)="volverAContacto()">← Volver</button>
+
+  <div class="rc-entrega">
+    <h3 class="rc-entrega__titulo"><span>🚚</span> Método de entrega</h3>
+
+    <div class="rc-entrega__opciones">
+      <button
+        type="button"
+        class="rc-entrega-card"
+        [class.rc-entrega-card--sel]="metodoEntrega() === 'retiro'"
+        (click)="seleccionarMetodoEntrega('retiro')">
+        <span class="rc-entrega-card__badge">Gratis</span>
+        <span class="rc-entrega-card__icono">🏬</span>
+        <span class="rc-entrega-card__nombre">Retiro en tienda</span>
+        <span class="rc-entrega-card__disponibles">{{ totalProductosCarrito() }} de {{ totalProductosCarrito() }} productos disponibles</span>
+      </button>
+
+      <button
+        type="button"
+        class="rc-entrega-card"
+        [class.rc-entrega-card--sel]="metodoEntrega() === 'domicilio'"
+        (click)="seleccionarMetodoEntrega('domicilio')">
+        <span class="rc-entrega-card__icono">🛵</span>
+        <span class="rc-entrega-card__nombre">Despacho a domicilio</span>
+        <span class="rc-entrega-card__disponibles">{{ totalProductosCarrito() }} de {{ totalProductosCarrito() }} productos disponibles</span>
+      </button>
+    </div>
+
+    @if (intentoEntrega() && !metodoEntrega()) {
+      <span class="rc-datos__error">Selecciona un método de entrega</span>
+    }
+
+    <div class="rc-datos__acciones">
+      <button class="rc-login__btn" (click)="continuarEntrega()">Continuar</button>
+    </div>
+  </div>
+} @else if (vistaEntrega() === 'retiro') {
+  <button class="rc-volver" (click)="volverAMetodoEntrega()">← Volver</button>
+
+  <div class="rc-retiro">
+    <h3 class="rc-retiro__titulo">Selecciona el tipo</h3>
+
+    <div class="rc-retiro__tipos">
+      <button
+        type="button"
+        class="rc-tipo-card"
+        [class.rc-tipo-card--sel]="tipoRetiro() === 'programado'"
+        (click)="seleccionarTipoRetiro('programado')">
+        <span class="rc-tipo-card__badge">Gratis</span>
+        <span class="rc-tipo-card__icono">📅</span>
+        <span class="rc-tipo-card__nombre">Programado</span>
+        <span class="rc-tipo-card__detalle">(Retira desde el {{ fechaProgramada() }})</span>
+      </button>
+
+      <button
+        type="button"
+        class="rc-tipo-card"
+        [class.rc-tipo-card--sel]="tipoRetiro() === 'express'"
+        (click)="seleccionarTipoRetiro('express')">
+        <span class="rc-tipo-card__badge">Gratis</span>
+        <span class="rc-tipo-card__icono">⚡</span>
+        <span class="rc-tipo-card__nombre">Express</span>
+        <span class="rc-tipo-card__detalle">(Retira desde 30 minutos)</span>
+      </button>
+    </div>
+
+    <div class="rc-retiro__ubicacion">
+      <div class="rc-sucursales-lista">
+        @for (s of sucursales(); track s.id) {
+          <button
+            type="button"
+            class="rc-sucursal-card"
+            [class.rc-sucursal-card--sel]="s.id === sucursalActual()?.id"
+            (click)="seleccionarSucursal(s)">
+            <span class="rc-sucursal-card__icono">🏬</span>
+            <div>
+              <p class="rc-sucursal-card__nombre">{{ s.nombre }}</p>
+              <p class="rc-sucursal-card__direccion">{{ s.direccion }}</p>
+            </div>
+          </button>
+        }
+      </div>
+
+      <div class="rc-retiro__mapa-wrap">
+        @if (mapaUrl()) {
+          <div class="rc-retiro__mapa">
+            <iframe [src]="mapaUrl()!" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          </div>
+        } @else {
+          <div class="rc-retiro__mapa rc-retiro__mapa--vacio">
+            <span>🗺️</span>
+            <p>Mapa no configurado</p>
+          </div>
+        }
+
+        @if (mostrarConfirmacion() && tipoRetiro()) {
+          <div class="rc-confirmar-tienda">
+            <div class="rc-confirmar-tienda__header">
+              <span class="rc-confirmar-tienda__titulo">Retira tu pedido</span>
+              <span class="rc-confirmar-tienda__badge">Gratis</span>
+              <button type="button" class="rc-confirmar-tienda__close" (click)="cerrarConfirmacion()" aria-label="Cerrar">✕</button>
+            </div>
+            <p class="rc-confirmar-tienda__fecha">A partir del {{ fechaRetiroTexto() }}</p>
+            <button class="rc-confirmar-tienda__btn" (click)="confirmarTiendaYFecha()">Confirmar tienda y fecha</button>
+          </div>
+        }
+      </div>
+    </div>
+
+    @if (intentoRetiro() && !tipoRetiro()) {
+      <span class="rc-datos__error">Selecciona un horario de retiro</span>
+    }
+
+    @if (tipoRetiro() && !mostrarConfirmacion()) {
+      <p class="rc-retiro__hint">👆 Selecciona tu sucursal para confirmar la fecha de retiro.</p>
+    }
+  </div>
+} @else {
+@if (vistaDomicilio() === 'direccion') {
+  <button class="rc-volver" (click)="volverAMetodoEntrega()">← Volver</button>
+
+  <div class="rc-domicilio">
+    <div class="rc-domicilio__header">
+      <h3 class="rc-domicilio__titulo"><span>🚚</span> Método de entrega</h3>
+    </div>
+
+    <div class="rc-datos__campo rc-datos__campo--ancho">
+      <input
+        type="text"
+        placeholder="Dirección de entrega"
+        [ngModel]="direccionEntrega()"
+        (ngModelChange)="direccionEntrega.set($event)" />
+      @if (intentoDomicilio() && !direccionEntrega().trim()) {
+        <span class="rc-datos__error">Ingresa tu dirección de entrega</span>
+      }
+    </div>
+
+    <div class="rc-domicilio__fila">
+      <input
+        class="rc-domicilio__depto"
+        type="text"
+        placeholder="N° Depto/Ofic"
+        [ngModel]="depto()"
+        (ngModelChange)="depto.set($event)" />
+      <button type="button" class="rc-domicilio__manual" (click)="abrirDireccionManual()">✏️ Ingresar manualmente</button>
+    </div>
+
+    <p class="rc-retiro__titulo">Selecciona tipo de despacho:</p>
+
+    <div class="rc-retiro__tipos">
+      <button
+        type="button"
+        class="rc-tipo-card"
+        [class.rc-tipo-card--sel]="tipoDespacho() === 'programado'"
+        (click)="seleccionarTipoDespacho('programado')">
+        <span class="rc-tipo-card__icono">📅</span>
+        <span class="rc-tipo-card__nombre">Programado</span>
+        <span class="rc-tipo-card__detalle">(Recibe {{ fechaDespachoTexto() }})</span>
+        @if (tipoDespacho() === 'programado') {
+          <span class="rc-tipo-card__disponibles">{{ totalProductosCarrito() }} de {{ totalProductosCarrito() }} productos disponibles</span>
+        }
+      </button>
+
+      <button
+        type="button"
+        class="rc-tipo-card"
+        [class.rc-tipo-card--sel]="tipoDespacho() === 'express'"
+        (click)="seleccionarTipoDespacho('express')">
+        <span class="rc-tipo-card__icono">⚡</span>
+        <span class="rc-tipo-card__nombre">Express</span>
+        <span class="rc-tipo-card__detalle">(Recibe desde 30 minutos)</span>
+      </button>
+    </div>
+
+    @if (intentoDomicilio() && !tipoDespacho()) {
+      <span class="rc-datos__error">Selecciona un tipo de despacho</span>
+    }
+
+    @if (tipoDespacho() === 'programado') {
+      <p class="rc-retiro__titulo">Elige la fecha de entrega:</p>
+
+      <div class="rc-fechas">
+        @for (f of fechasDespachoDisponibles(); track f.id) {
+          <button
+            type="button"
+            class="rc-fecha-btn"
+            [class.rc-fecha-btn--sel]="fechaDespachoId() === f.id"
+            (click)="seleccionarFechaDespacho(f.id)">
+            {{ f.label }}
+          </button>
+        }
+      </div>
+
+      <p class="rc-domicilio__nota">* Entrega hasta las 22:00 (en cualquier horario)</p>
+      <p class="rc-domicilio__nota">* No se puede elegir horario exacto</p>
+
+      @if (intentoDomicilio() && !fechaDespachoId()) {
+        <span class="rc-datos__error">Selecciona una fecha de entrega</span>
+      }
+    }
+
+    <div class="rc-datos__acciones">
+      <button class="rc-login__btn" (click)="continuarDomicilio()">Continuar</button>
+    </div>
+  </div>
+} @else {
+  <div class="rc-manual">
+    <h3 class="rc-manual__titulo">Dirección manual</h3>
+
+    <div class="rc-datos__campo rc-datos__campo--ancho">
+      <input
+        type="text"
+        placeholder="Calle"
+        [ngModel]="calleManual()"
+        (ngModelChange)="calleManual.set($event)" />
+      @if (intentoManual() && !calleManual().trim()) {
+        <span class="rc-datos__error">Ingresa la calle</span>
+      }
+    </div>
+
+    <div class="rc-datos__fila">
+      <div class="rc-datos__campo">
+        <input
+          type="text"
+          placeholder="Número"
+          [ngModel]="numeroManual()"
+          (ngModelChange)="numeroManual.set($event)" />
+        @if (intentoManual() && !numeroManual().trim()) {
+          <span class="rc-datos__error">Requerido</span>
+        }
+      </div>
+      <div class="rc-datos__campo">
+        <input
+          type="text"
+          placeholder="N° Depto/Oficina"
+          [ngModel]="deptoManual()"
+          (ngModelChange)="deptoManual.set($event)" />
+      </div>
+    </div>
+
+    <div class="rc-datos__fila">
+      <div class="rc-datos__campo">
+        <label class="rc-datos__label">Región</label>
+        <select
+          [ngModel]="regionManual()"
+          (ngModelChange)="seleccionarRegion($event)">
+          <option value="" disabled>Seleccione una región</option>
+          @for (r of regiones; track r.nombre) {
+            <option [value]="r.nombre">{{ r.nombre }}</option>
+          }
+        </select>
+        @if (intentoManual() && !regionManual()) {
+          <span class="rc-datos__error">Selecciona una región</span>
+        }
+      </div>
+      <div class="rc-datos__campo">
+        <label class="rc-datos__label">Comuna</label>
+        <select
+          [ngModel]="comunaManual()"
+          (ngModelChange)="seleccionarComuna($event)"
+          [disabled]="!regionManual()">
+          <option value="" disabled>Seleccione una comuna</option>
+          @for (c of comunasDisponibles(); track c) {
+            <option [value]="c">{{ c }}</option>
+          }
+        </select>
+        @if (intentoManual() && !comunaManual()) {
+          <span class="rc-datos__error">Selecciona una comuna</span>
+        }
+      </div>
+    </div>
+
+    <button type="button" class="rc-manual__mapa-btn" (click)="toggleMapaManual()">
+      📍 Marcar punto en el mapa
+    </button>
+
+    @if (mostrarMapaManual()) {
+      @if (mapaManualUrl()) {
+        <div class="rc-retiro__mapa">
+          <iframe [src]="mapaManualUrl()!" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+      } @else {
+        <p class="rc-retiro__hint">Completa calle, número, región y comuna para ver el mapa.</p>
+      }
+    }
+
+    <div class="rc-manual__acciones">
+      <button type="button" class="rc-manual__atras" (click)="volverDeManual()">Atrás</button>
+      <button class="rc-login__btn" (click)="continuarManual()">Continuar</button>
+    </div>
+  </div>
+}
+}

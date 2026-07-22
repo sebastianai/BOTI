@@ -1,0 +1,55 @@
+<div class="login-page">
+  <div class="login-card">
+    <button class="login-card__volver" (click)="volver()">← Volver a la tienda</button>
+
+    <div class="login-card__logo">
+      <img [src]="portalConfig.logoUrl(portalConfig.config().logo_url)" [alt]="portalConfig.config().nombre_negocio" width="80" height="80" />
+    </div>
+    <h1 class="login-card__titulo">Inicia sesión</h1>
+    <p class="login-card__subtitulo">Ingresa tu RUT y contraseña para continuar</p>
+
+    @if (errorMsg()) {
+      <div class="login-card__error">{{ errorMsg() }}</div>
+    }
+
+    <form class="login-form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="login-form__campo">
+        <label for="rut">RUT</label>
+        <input
+          id="rut"
+          type="text"
+          formControlName="rut"
+          placeholder="12345678-9"
+          autocomplete="username" />
+        @if (form.get('rut')?.touched && form.get('rut')?.invalid) {
+          <span class="login-form__error">Campo requerido</span>
+        }
+      </div>
+
+      <div class="login-form__campo">
+        <label for="contrasena">Contraseña</label>
+        <input
+          id="contrasena"
+          type="password"
+          formControlName="contrasena"
+          placeholder="••••••••"
+          autocomplete="current-password" />
+        @if (form.get('contrasena')?.touched && form.get('contrasena')?.invalid) {
+          <span class="login-form__error">Campo requerido</span>
+        }
+      </div>
+
+      <button class="login-form__btn" type="submit" [disabled]="cargando()">
+        @if (cargando()) {
+          <span>Ingresando...</span>
+        } @else {
+          <span>Ingresar</span>
+        }
+      </button>
+    </form>
+
+    <p class="login-card__aviso">
+      ¿No tienes cuenta? <a href="javascript:void(0)" (click)="irARegistro()">Regístrate</a>
+    </p>
+  </div>
+</div>

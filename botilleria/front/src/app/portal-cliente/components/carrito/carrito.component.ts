@@ -1,4 +1,5 @@
 import { Component, input, output, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { CarritoService } from '../../services/carrito.service';
 import { ItemCarrito } from '../../models/producto.model';
 import { urlImagenProducto } from '../../../core/imagen.util';
@@ -12,8 +13,15 @@ import { urlImagenProducto } from '../../../core/imagen.util';
 export class CarritoComponent {
   readonly abierto = input(false);
   readonly cerrar = output<void>();
+  readonly irAPagar = output<void>();
 
+  private readonly router = inject(Router);
   protected readonly carritoService = inject(CarritoService);
+
+  protected cotizar(): void {
+    this.cerrar.emit();
+    this.router.navigate(['/portal-cliente/cotizar']);
+  }
 
   protected formatearPrecio(precio: number): string {
     return '$' + precio.toLocaleString('es-CL');

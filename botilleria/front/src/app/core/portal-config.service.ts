@@ -15,6 +15,9 @@ export interface DisenoPortal {
   color_primario: string;
   color_acento: string;
   mapa_url: string | null;
+  instagram_url: string | null;
+  facebook_url: string | null;
+  nombre_pestana: string;
   actualizado_en: string;
 }
 
@@ -30,6 +33,9 @@ const DEFAULT_CONFIG: DisenoPortal = {
   color_primario: '#1c3829',
   color_acento: '#c9a227',
   mapa_url: null,
+  instagram_url: null,
+  facebook_url: null,
+  nombre_pestana: 'MI BOTI',
   actualizado_en: ''
 };
 
@@ -37,8 +43,10 @@ const DEFAULT_CONFIG: DisenoPortal = {
 export class PortalConfigService {
   private readonly http = inject(HttpClient);
   private readonly _config = signal<DisenoPortal>(DEFAULT_CONFIG);
+  private readonly _cargado = signal(false);
 
   readonly config = this._config.asReadonly();
+  readonly cargado = this._cargado.asReadonly();
 
   constructor() {
     this.cargar();
@@ -47,7 +55,10 @@ export class PortalConfigService {
   cargar(): void {
     this.http.get<DisenoPortal>(`${API_URL}/portal-config`).pipe(
       catchError(() => of(DEFAULT_CONFIG))
-    ).subscribe(cfg => this._config.set(cfg));
+    ).subscribe(cfg => {
+      this._config.set(cfg);
+      this._cargado.set(true);
+    });
   }
 
   actualizarConfig(cfg: DisenoPortal): void {
@@ -60,7 +71,7 @@ export class PortalConfigService {
   }
 
   productoImageUrl(imagenPath: string | null | undefined): string {
-    if (!imagenPath) return '';
+    if (!imagenPath) return 'assets/img/vacio_producto.png';
     // Si ya contiene la ruta completa, devolverla con la base URL
     if (imagenPath.startsWith('/uploads/')) {
       return `${ASSET_BASE_URL}${imagenPath}`;

@@ -51,8 +51,17 @@
   <div class="ped-admin__filtros">
     <input class="ped-admin__busqueda" type="search" placeholder="Buscar por nombre, N° pedido o teléfono…"
       [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)" />
-    @if (filtroEstado() !== 'todos') {
-      <button class="btn btn--secundario" (click)="filtroEstado.set('todos')">✕ Limpiar filtro</button>
+    <select class="ped-admin__select"
+      [ngModel]="filtroSucursal()"
+      (ngModelChange)="filtroSucursal.set($event === 'todas' || $event === 'sin_asignar' ? $event : +$event)">
+      <option value="todas">Todas las sucursales</option>
+      <option value="sin_asignar">Sin asignar</option>
+      @for (s of sucursales(); track s.id) {
+        <option [value]="s.id">{{ s.nombre }}</option>
+      }
+    </select>
+    @if (filtroEstado() !== 'todos' || filtroSucursal() !== 'todas') {
+      <button class="btn btn--secundario" (click)="filtroEstado.set('todos'); filtroSucursal.set('todas')">✕ Limpiar filtro</button>
     }
   </div>
 
@@ -73,6 +82,7 @@
             <th>Total</th>
             <th>Pago</th>
             <th>Canal</th>
+            <th>Sucursal</th>
             <th>Estado</th>
             <th></th>
           </tr>
@@ -92,6 +102,7 @@
               <td class="ped-tabla__total">{{ clp(p.total) }}</td>
               <td class="ped-tabla__sub">{{ labelPago(p.medio_pago) }}</td>
               <td class="ped-tabla__sub">{{ labelCanal(p.canal) }}</td>
+              <td class="ped-tabla__sub">{{ p.sucursal_nombre || '—' }}</td>
               <td>
                 <span class="ped-badge ped-badge--{{ p.estado }}">
                   {{ p.estado === 'en_camino' ? 'En camino' : p.estado | titlecase }}
@@ -166,6 +177,24 @@
                   <span class="ped-dato--nota">{{ detalle()!.notas }}</span>
                 </div>
               }
+            </div>
+          </section>
+
+          <!-- Sucursal -->
+          <section class="ped-seccion">
+            <h3 class="ped-seccion__titulo">🏬 Sucursal</h3>
+            <div class="ped-sucursal">
+              <select class="ped-sucursal__select"
+                [ngModel]="sucursalSel()"
+                (ngModelChange)="sucursalSel.set($event === '' ? null : +$event)">
+                <option value="">Sin asignar</option>
+                @for (s of sucursales(); track s.id) {
+                  <option [value]="s.id">{{ s.nombre }}</option>
+                }
+              </select>
+              <button class="btn btn--primary btn--sm" [disabled]="guardandoSuc() || sucursalSel() === detalle()!.sucursal_id" (click)="guardarSucursal()">
+                {{ guardandoSuc() ? 'Guardando...' : 'Guardar' }}
+              </button>
             </div>
           </section>
 

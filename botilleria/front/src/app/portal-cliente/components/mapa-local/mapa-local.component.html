@@ -1,22 +1,39 @@
-@if (mapaUrl()) {
+@if (sucursales().length > 0) {
   <section class="mapa-local">
     <div class="mapa-local__header">
       <span class="mapa-local__icono">📍</span>
       <div>
         <h2 class="mapa-local__titulo">¿Dónde estamos?</h2>
-        @if (portalConfig.config().direccion) {
-          <p class="mapa-local__direccion">{{ portalConfig.config().direccion }}</p>
+        @if (sucursalSeleccionada()) {
+          <p class="mapa-local__direccion">{{ sucursalSeleccionada()!.direccion }}</p>
         }
       </div>
     </div>
-    <div class="mapa-local__wrap">
-      <iframe
-        [src]="mapaUrl()!"
-        class="mapa-local__iframe"
-        allowfullscreen
-        loading="lazy"
-        referrerpolicy="no-referrer-when-downgrade">
-      </iframe>
-    </div>
+
+    @if (sucursales().length > 1) {
+      <div class="mapa-local__sucursales">
+        @for (s of sucursales(); track s.id) {
+          <button
+            type="button"
+            class="mapa-local__sucursal-btn"
+            [class.mapa-local__sucursal-btn--sel]="s.id === sucursalSeleccionada()?.id"
+            (click)="seleccionarSucursal(s.id)">
+            {{ s.nombre }}
+          </button>
+        }
+      </div>
+    }
+
+    @if (mapaUrl()) {
+      <div class="mapa-local__wrap">
+        <iframe
+          [src]="mapaUrl()!"
+          class="mapa-local__iframe"
+          allowfullscreen
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+      </div>
+    }
   </section>
 }

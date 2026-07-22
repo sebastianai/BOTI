@@ -1,0 +1,98 @@
+<footer class="footer">
+  <div class="footer__main">
+    <div class="footer__brand">
+      <img
+        class="footer__logo"
+        [src]="logoFooter"
+        [alt]="portalConfig.config().nombre_negocio" />
+
+      <div class="footer__badge">
+        <svg class="footer__badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L4 5v6c0 5 3.4 9 8 11 4.6-2 8-6 8-11V5l-8-3z" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>SSL ENCRYPTION</span>
+      </div>
+
+      <div class="footer__badge">
+        <svg class="footer__badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>COMPRA SEGURA</span>
+      </div>
+    </div>
+
+    <div class="footer__col">
+      <h3 class="footer__title">Servicio al cliente</h3>
+      <p class="footer__text">
+        Horario de atención: Lunes a Viernes (días hábiles) de 09:00 a 18:00 hrs.
+      </p>
+      <p class="footer__text">
+        Correo: {{ portalConfig.config().email || 'hola@' + portalConfig.config().nombre_negocio.toLowerCase() + '.cl' }}
+      </p>
+      <ul class="footer__links">
+        <li><a href="javascript:void(0)">Métodos de entrega</a></li>
+        <li><a href="javascript:void(0)">Tiempos de entrega y costos</a></li>
+        <li><a href="javascript:void(0)">Cyber</a></li>
+        <li><a href="javascript:void(0)">Trabaja con nosotros</a></li>
+      </ul>
+    </div>
+
+    <div class="footer__col">
+      <h3 class="footer__title">Condiciones y políticas de devolución</h3>
+      <ul class="footer__links">
+        <li><a href="javascript:void(0)">Política de Privacidad {{ portalConfig.config().nombre_negocio }}</a></li>
+        <li><a href="javascript:void(0)">Términos y Condiciones {{ portalConfig.config().nombre_negocio }}</a></li>
+        <li><a href="javascript:void(0)">Términos y Condiciones Club {{ portalConfig.config().nombre_negocio }}</a></li>
+      </ul>
+
+      <h3 class="footer__title footer__title--spaced">Unidad de ventas mayoristas</h3>
+      <p class="footer__text">Correo: ventas&#64;{{ portalConfig.config().nombre_negocio.toLowerCase() }}.cl</p>
+      <p class="footer__text">
+        Horario de atención: Lunes a Viernes (días hábiles) de 09:00 a 18:00 hrs.
+      </p>
+    </div>
+
+    <div class="footer__col">
+      <h3 class="footer__title">Casa matriz</h3>
+      <p class="footer__text">
+        {{ portalConfig.config().direccion || 'Av. Las Condes 11400, Oficina 51, Vitacura' }}
+      </p>
+
+      <h3 class="footer__title footer__title--spaced">Síguenos en redes</h3>
+      <div class="footer__socials">
+        @if (portalConfig.config().instagram_url) {
+          <a [href]="portalConfig.config().instagram_url" target="_blank" rel="noopener noreferrer" class="footer__social" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" stroke-width="1.5"/>
+              <circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+              <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/>
+            </svg>
+          </a>
+        }
+        @if (portalConfig.config().facebook_url) {
+          <a [href]="portalConfig.config().facebook_url" target="_blank" rel="noopener noreferrer" class="footer__social" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 8h2V4.5h-2.5C12.6 4.5 11 6.1 11 8.2V11H9v3.5h2V21h3.5v-6.5H17l.5-3.5h-3V8.5c0-.3.2-.5.5-.5z" fill="currentColor"/>
+            </svg>
+          </a>
+        }
+      </div>
+    </div>
+
+    <div class="footer__payments">
+      <span class="footer__payments-label">Medios de pago</span>
+      <div class="footer__payments-box">
+        <img
+          class="footer__payments-img"
+          src="assets/img/webpay-plus_11zon.webp"
+          alt="Webpay Plus" />
+      </div>
+    </div>
+  </div>
+
+  <div class="footer__bottom">
+    <p>&copy; {{ anioActual }} {{ portalConfig.config().nombre_negocio }}. Todos los derechos reservados.</p>
+  </div>
+</footer>

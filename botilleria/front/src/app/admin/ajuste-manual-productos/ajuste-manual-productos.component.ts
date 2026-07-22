@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import {
   ReactiveFormsModule,
+  FormsModule,
   FormBuilder,
   FormGroup,
   Validators,
@@ -26,10 +27,12 @@ function soloNumeros(control: AbstractControl): ValidationErrors | null {
   return /^-?\d+(\.\d+)?$/.test(String(valor).trim()) ? null : { numeroInvalido: true };
 }
 
+type StockBucket = 'con' | 'bajo' | 'sin';
+
 @Component({
   selector: 'app-ajuste-manual-productos',
   standalone: true,
-  imports: [ReactiveFormsModule, VasosLoadingComponent],
+  imports: [ReactiveFormsModule, FormsModule, VasosLoadingComponent],
   templateUrl: './ajuste-manual-productos.component.html',
   styleUrl: './ajuste-manual-productos.component.scss'
 })
@@ -60,6 +63,73 @@ export class AjusteManualProductosComponent implements OnInit {
   protected readonly seleccionados = signal<Set<number>>(new Set());
   protected readonly confirmarEliminacionAbierto = signal(false);
   protected readonly eliminandoSeleccionados = signal(false);
+
+  // ─── Buscador y filtros ────────────────────────────────────────────────
+  protected readonly busqueda = signal('');
+  protected readonly filtroPanelAbierto = signal(false);
+  protected readonly filtroMarcas = signal<Set<string>>(new Set());
+  protected readonly filtroTipos = signal<Set<string>>(new Set());
+  protected readonly filtroStock = signal<Set<StockBucket>>(new Set());
+
+  protected readonly stockBuckets: { valor: StockBucket; label: string }[] = [
+    { valor: 'con', label: 'Con stock' },
+    { valor: 'bajo', label: 'Stock bajo (≤ 10)' },
+    { valor: 'sin', label: 'Sin stock' },
+  ];
+
+  protected readonly marcasDisponibles = computed(() =>
+    [...new Set(this.productos().map(p => p.marca))].sort((a, b) => a.localeCompare(b))
+  );
+  protected readonly tiposDisponibles = computed(() =>
+    [...new Set(this.productos().map(p => p.categoria))].sort((a, b) => a.localeCompare(b))
+  );
+
+  private stockBucketDe(stock: number): StockBucket {
+    if (stock <= 0) return 'sin';
+    if (stock <= 10) return 'bajo';
+    return 'con';
+  }
+
+  protected readonly productosFiltrados = computed(() => {
+    const q = this.busqueda().toLowerCase().trim();
+    const fMarcas = this.filtroMarcas();
+    const fTipos = this.filtroTipos();
+    const fStock = this.filtroStock();
+
+    return this.productos().filter(p => {
+      if (q && !p.nombre.toLowerCase().includes(q) && !p.marca.toLowerCase().includes(q)) return false;
+      if (fMarcas.size > 0 && !fMarcas.has(p.marca)) return false;
+      if (fTipos.size > 0 && !fTipos.has(p.categoria)) return false;
+      if (fStock.size > 0 && !fStock.has(this.stockBucketDe(p.stock))) return false;
+      return true;
+    });
+  });
+
+  protected readonly filtrosActivos = computed(() =>
+    this.filtroMarcas().size + this.filtroTipos().size + this.filtroStock().size
+  );
+
+  protected toggleFiltroPanel(): void {
+    this.filtroPanelAbierto.update(v => !v);
+  }
+
+  private toggleEnSet<T>(sig: ReturnType<typeof signal<Set<T>>>, valor: T): void {
+    sig.update(set => {
+      const next = new Set(set);
+      if (next.has(valor)) next.delete(valor); else next.add(valor);
+      return next;
+    });
+  }
+
+  protected toggleFiltroMarca(marca: string): void { this.toggleEnSet(this.filtroMarcas, marca); }
+  protected toggleFiltroTipo(tipo: string): void { this.toggleEnSet(this.filtroTipos, tipo); }
+  protected toggleFiltroStock(bucket: StockBucket): void { this.toggleEnSet(this.filtroStock, bucket); }
+
+  protected limpiarFiltros(): void {
+    this.filtroMarcas.set(new Set());
+    this.filtroTipos.set(new Set());
+    this.filtroStock.set(new Set());
+  }
 
   protected readonly form: FormGroup = this.fb.group({
     nombre: ['', Validators.required],

@@ -11,13 +11,53 @@
     <div class="packs-admin__alerta">{{ errorMsg() }}</div>
   }
 
+  <div class="packs-buscador">
+    <div class="packs-buscador__fila">
+      <input
+        class="packs-buscador__input"
+        type="search"
+        placeholder="🔍 Buscar pack por nombre..."
+        [ngModel]="busquedaPacks()"
+        (ngModelChange)="busquedaPacks.set($event)"
+        [ngModelOptions]="{ standalone: true }" />
+      <button
+        class="packs-buscador__btn-filtros"
+        [class.packs-buscador__btn-filtros--activo]="filtroPanelPacksAbierto()"
+        (click)="toggleFiltroPanelPacks()">
+        ⚙️ Filtros
+        @if (filtrosPacksActivos() > 0) {
+          <span class="packs-buscador__contador">{{ filtrosPacksActivos() }}</span>
+        }
+      </button>
+      @if (filtrosPacksActivos() > 0) {
+        <button class="btn btn--secundario" (click)="limpiarFiltrosPacks()">✕ Limpiar filtros</button>
+      }
+    </div>
+
+    @if (filtroPanelPacksAbierto()) {
+      <div class="packs-filtros">
+        <p class="packs-filtros__titulo">Estado</p>
+        <div class="packs-filtros__lista">
+          @for (estado of estadosPack; track estado.valor) {
+            <label class="packs-filtros__item">
+              <input type="checkbox" [checked]="filtroEstados().has(estado.valor)" (change)="toggleFiltroEstado(estado.valor)" />
+              <span>{{ estado.label }}</span>
+            </label>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
   @if (cargando()) {
     <div class="packs-admin__estado">Cargando...</div>
   } @else if (packs().length === 0) {
     <div class="packs-admin__estado">No hay packs. Crea el primero.</div>
+  } @else if (packsFiltrados().length === 0) {
+    <div class="packs-admin__estado">Ningún pack coincide con la búsqueda o los filtros aplicados.</div>
   } @else {
     <div class="packs-grid">
-      @for (pack of packs(); track pack.id) {
+      @for (pack of packsFiltrados(); track pack.id) {
         <div class="pack-card" [class.pack-card--inactivo]="!pack.activo">
 
           <label
@@ -127,19 +167,74 @@
             Productos del pack
             <span class="pack-form__count">{{ seleccionados().size }} seleccionados</span>
           </label>
-          <input
-            class="pack-form__busqueda"
-            type="text"
-            placeholder="Buscar producto..."
-            [ngModel]="busquedaProducto()"
-            (ngModelChange)="busquedaProducto.set($event)"
-            [ngModelOptions]="{ standalone: true }" />
+          <div class="pack-form__picker-header">
+            <input
+              class="pack-form__busqueda"
+              type="text"
+              placeholder="Buscar producto..."
+              [ngModel]="busquedaProducto()"
+              (ngModelChange)="busquedaProducto.set($event)"
+              [ngModelOptions]="{ standalone: true }" />
+            <button
+              type="button"
+              class="pack-form__btn-filtros"
+              [class.pack-form__btn-filtros--activo]="filtroPanelAbierto()"
+              (click)="toggleFiltroPanel()">
+              ⚙️ Filtros
+              @if (filtrosActivos() > 0) {
+                <span class="pack-form__contador">{{ filtrosActivos() }}</span>
+              }
+            </button>
+            @if (filtrosActivos() > 0) {
+              <button type="button" class="btn btn--secundario" (click)="limpiarFiltros()">✕ Limpiar</button>
+            }
+          </div>
+
+          @if (filtroPanelAbierto()) {
+            <div class="pack-form__filtros">
+              <div class="pack-form__filtros-grupo">
+                <p class="pack-form__filtros-titulo">Marca</p>
+                <div class="pack-form__filtros-lista">
+                  @for (marca of marcasDisponibles(); track marca) {
+                    <label class="pack-form__filtros-item">
+                      <input type="checkbox" [checked]="filtroMarcas().has(marca)" (change)="toggleFiltroMarca(marca)" />
+                      <span>{{ marca }}</span>
+                    </label>
+                  }
+                </div>
+              </div>
+              <div class="pack-form__filtros-grupo">
+                <p class="pack-form__filtros-titulo">Tipo</p>
+                <div class="pack-form__filtros-lista">
+                  @for (tipo of tiposDisponibles(); track tipo) {
+                    <label class="pack-form__filtros-item">
+                      <input type="checkbox" [checked]="filtroTipos().has(tipo)" (change)="toggleFiltroTipo(tipo)" />
+                      <span>{{ tipo }}</span>
+                    </label>
+                  }
+                </div>
+              </div>
+              <div class="pack-form__filtros-grupo">
+                <p class="pack-form__filtros-titulo">Stock</p>
+                <div class="pack-form__filtros-lista">
+                  @for (bucket of stockBuckets; track bucket.valor) {
+                    <label class="pack-form__filtros-item">
+                      <input type="checkbox" [checked]="filtroStock().has(bucket.valor)" (change)="toggleFiltroStock(bucket.valor)" />
+                      <span>{{ bucket.label }}</span>
+                    </label>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+
           <div class="pack-form__producto-lista">
             @for (p of productosFiltrados(); track p.id) {
               <div class="pack-form__producto-item" [class.pack-form__producto-item--sel]="estaSeleccionado(p.id)">
                 <label class="pack-form__producto-check">
                   <input type="checkbox" [checked]="estaSeleccionado(p.id)" (change)="toggleProducto(p.id)" />
                   <span class="pack-form__producto-nombre">{{ p.nombre }}</span>
+                  <span class="pack-form__producto-precio">{{ formatearPrecio(p.precio) }}</span>
                   <span class="pack-form__producto-cat">{{ p.categoria }}</span>
                 </label>
                 @if (estaSeleccionado(p.id)) {
@@ -158,6 +253,37 @@
               <p class="pack-form__vacio">Sin resultados</p>
             }
           </div>
+        </div>
+
+        <!-- Resumen de precios y precio del pack -->
+        <div class="pack-form__campo pack-form__campo--ancho">
+          <label>Resumen de precios</label>
+          <div class="pack-form__resumen">
+            @if (detalleSeleccionados().length === 0) {
+              <p class="pack-form__vacio">Selecciona productos para ver el resumen de precios.</p>
+            } @else {
+              <ul class="pack-form__resumen-lista">
+                @for (d of detalleSeleccionados(); track d.producto.id) {
+                  <li class="pack-form__resumen-item">
+                    <span class="pack-form__resumen-nombre">{{ d.producto.nombre }} @if (d.cantidad > 1) { × {{ d.cantidad }} }</span>
+                    <span class="pack-form__resumen-valor">{{ formatearPrecio(d.subtotal) }}</span>
+                  </li>
+                }
+              </ul>
+              <div class="pack-form__resumen-total">
+                <span>Suma de productos</span>
+                <strong>{{ formatearPrecio(sumaProductos()) }}</strong>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="pack-form__campo pack-form__campo--ancho">
+          <label>Ingresa precio pack *</label>
+          <input type="number" formControlName="precio" min="0" inputmode="numeric" placeholder="Ej: 12990" />
+          @if (form.get('precio')?.touched && form.get('precio')?.invalid) {
+            <span class="pack-form__error-campo">Ingresa un precio válido</span>
+          }
         </div>
 
         @if (errorMsg()) {

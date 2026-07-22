@@ -121,6 +121,15 @@
     }
   }
 
+  &__categoria {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--c-accent) 20%, transparent);
+    color: var(--c-primary-dark);
+  }
+
   &__toggle {
     font-size: 12px;
     font-weight: 600;
@@ -216,7 +225,7 @@
 
     label { font-size: 13px; font-weight: 600; color: var(--c-text); }
 
-    input[type="text"], input[type="url"], input[type="number"], textarea {
+    input[type="text"], input[type="url"], input[type="number"], textarea, select {
       padding: 10px 12px;
       border: 1.5px solid var(--c-border);
       border-radius: var(--radius-sm);
@@ -230,6 +239,12 @@
     }
 
     textarea { resize: vertical; }
+
+    &-ayuda {
+      font-size: 11.5px;
+      color: var(--c-text-muted);
+      line-height: 1.4;
+    }
 
     &--ancho { grid-column: 1 / -1; }
 

@@ -1,8 +1,5 @@
 <section class="productos">
-  <div class="section-title">
-    <h2>{{ categoria() === 'Todos' ? 'Todos los productos' : categoria() }}</h2>
-  </div>
-
+   <!-- 
   <div class="productos__filtros">
     <span class="productos__count">{{ productosFiltrados().length }} productos</span>
     <select class="productos__select" [value]="orden()" (change)="onOrden($event)" aria-label="Ordenar">
@@ -14,10 +11,11 @@
       class="productos__filtro-btn"
       [class.productos__filtro-btn--activo]="soloOfertas()"
       (click)="soloOfertas.set(!soloOfertas())">
-      🏷️ Solo Ofertas
+       Solo Ofertas
     </button>
   </div>
-
+-->
+  
   @if (cargando()) {
     <app-vasos-loading mensaje="Cargando productos..." />
   } @else if (error()) {
@@ -31,21 +29,18 @@
       <small class="productos__sin-resultados-sub">Intenta con otro término de búsqueda</small>
     </div>
   } @else if (esCarrusel()) {
+
+    <!-- Carrusel de categoría específica -->
     <div class="productos__wrapper" #wrapper>
       <div class="productos__track" #track (scroll)="onScrollTrack()">
         @for (producto of productosFiltrados(); track producto.id) {
           <article class="producto-card" [class.producto-card--agregado]="estaAgregado(producto.id)" (click)="onProductoClick(producto)">
-            <div class="producto-card__imagen" [style.background]="producto.imagen ? 'none' : producto.colorFondo">
-              @if (producto.imagen) {
-                <img class="producto-card__foto" [src]="urlImagenProducto(producto.imagen)" [alt]="producto.nombre" />
-              } @else {
-                <span class="producto-card__emoji">{{ producto.emoji }}</span>
-              }
+            <div class="producto-card__imagen">
+              <img class="producto-card__foto" [src]="urlImagenProducto(producto.imagen)" [alt]="producto.nombre" />
               @if (badgeLabel(producto); as label) {
                 <span class="producto-card__oferta-badge">{{ label }}</span>
               }
             </div>
-
             <div class="producto-card__body">
               <div class="producto-card__meta">
                 <span class="producto-card__categoria">{{ producto.categoria }}</span>
@@ -53,108 +48,96 @@
                   <span class="producto-card__grados">{{ producto.grados }}°</span>
                 }
               </div>
-
               <h3 class="producto-card__nombre">{{ producto.nombre }}</h3>
               <p class="producto-card__marca">{{ producto.marca }}</p>
-
-              <div class="producto-card__volumen">
-                <span>{{ producto.volumen }}</span>
-              </div>
-
+              <div class="producto-card__volumen"><span>{{ producto.volumen }}</span></div>
               <div class="producto-card__footer">
                 <div class="producto-card__precios">
                   @if (producto.precioOriginal) {
-                    <span class="producto-card__precio-original">
-                      {{ formatearPrecio(producto.precioOriginal) }}
-                    </span>
+                    <span class="producto-card__precio-original">{{ formatearPrecio(producto.precioOriginal) }}</span>
                   }
                   <span class="producto-card__precio">{{ formatearPrecio(producto.precio) }}</span>
                 </div>
-
                 <button
                   class="producto-card__btn"
                   [class.producto-card__btn--agregado]="estaAgregado(producto.id)"
                   (click)="agregarAlCarrito(producto); $event.stopPropagation()"
                   [disabled]="estaAgregado(producto.id)">
-                  @if (estaAgregado(producto.id)) {
-                    <span>✓ Agregado</span>
-                  } @else {
-                    <span>+ Agregar</span>
-                  }
+                  @if (estaAgregado(producto.id)) { <span>✓ Agregado</span> } @else { <span>+ Agregar</span> }
                 </button>
               </div>
             </div>
           </article>
         }
       </div>
-
-      <button
-        class="prod-carousel-btn prod-carousel-btn--prev"
+      <button class="prod-carousel-btn prod-carousel-btn--prev"
         [style.top]="btnTop()" [style.left]="btnPrevL()"
         (click)="anterior()" [disabled]="!puedeAnterior()"
         aria-label="Anterior">&#8249;</button>
-
-      <button
-        class="prod-carousel-btn prod-carousel-btn--next"
+      <button class="prod-carousel-btn prod-carousel-btn--next"
         [style.top]="btnTop()" [style.left]="btnNextL()"
         (click)="siguiente()" [disabled]="!puedeSiguiente()"
         aria-label="Siguiente">&#8250;</button>
     </div>
+
   } @else {
-    <div class="productos__grid">
-      @for (producto of productosFiltrados(); track producto.id) {
-        <article class="producto-card" [class.producto-card--agregado]="estaAgregado(producto.id)" (click)="onProductoClick(producto)">
-          <div class="producto-card__imagen" [style.background]="producto.imagen ? 'none' : producto.colorFondo">
-            @if (producto.imagen) {
-              <img class="producto-card__foto" [src]="urlImagenProducto(producto.imagen)" [alt]="producto.nombre" />
-            } @else {
-              <span class="producto-card__emoji">{{ producto.emoji }}</span>
-            }
-            @if (badgeLabel(producto); as label) {
-              <span class="producto-card__oferta-badge">{{ label }}</span>
+
+    <!-- Vista agrupada por categoría (Todos) -->
+    @for (grupo of productosAgrupados(); track grupo.categoria; let i = $index) {
+      <div class="productos__grupo">
+        <div class="section-title productos__grupo-titulo">
+          <h2>{{ grupo.categoria }}</h2>
+        </div>
+        <div class="productos__wrapper" #groupWrapper>
+          <div class="productos__track" #groupTrack (scroll)="onScrollGrupo(i)">
+            @for (producto of grupo.productos; track producto.id) {
+              <article class="producto-card" [class.producto-card--agregado]="estaAgregado(producto.id)" (click)="onProductoClick(producto)">
+                <div class="producto-card__imagen">
+                  <img class="producto-card__foto" [src]="urlImagenProducto(producto.imagen)" [alt]="producto.nombre" />
+                  @if (badgeLabel(producto); as label) {
+                    <span class="producto-card__oferta-badge">{{ label }}</span>
+                  }
+                </div>
+                <div class="producto-card__body">
+                  <div class="producto-card__meta">
+                    <span class="producto-card__categoria">{{ producto.categoria }}</span>
+                    @if (producto.grados > 0) {
+                      <span class="producto-card__grados">{{ producto.grados }}°</span>
+                    }
+                  </div>
+                  <h3 class="producto-card__nombre">{{ producto.nombre }}</h3>
+                  <p class="producto-card__marca">{{ producto.marca }}</p>
+                  <div class="producto-card__volumen"><span>{{ producto.volumen }}</span></div>
+                  <div class="producto-card__footer">
+                    <div class="producto-card__precios">
+                      @if (producto.precioOriginal) {
+                        <span class="producto-card__precio-original">{{ formatearPrecio(producto.precioOriginal) }}</span>
+                      }
+                      <span class="producto-card__precio">{{ formatearPrecio(producto.precio) }}</span>
+                    </div>
+                    <button
+                      class="producto-card__btn"
+                      [class.producto-card__btn--agregado]="estaAgregado(producto.id)"
+                      (click)="agregarAlCarrito(producto); $event.stopPropagation()"
+                      [disabled]="estaAgregado(producto.id)">
+                      @if (estaAgregado(producto.id)) { <span>✓ Agregado</span> } @else { <span>+ Agregar</span> }
+                    </button>
+                  </div>
+                </div>
+              </article>
             }
           </div>
+          <button class="prod-carousel-btn prod-carousel-btn--prev"
+            [style.top]="btnTopGrupo(i)" [style.left]="btnPrevLGrupo(i)"
+            (click)="anteriorGrupo(i)" [disabled]="!puedeAnteriorGrupo(i)"
+            aria-label="Anterior">&#8249;</button>
+          <button class="prod-carousel-btn prod-carousel-btn--next"
+            [style.top]="btnTopGrupo(i)" [style.left]="btnNextLGrupo(i)"
+            (click)="siguienteGrupo(i)" [disabled]="!puedeSiguienteGrupo(i)"
+            aria-label="Siguiente">&#8250;</button>
+        </div>
+      </div>
+    }
 
-          <div class="producto-card__body">
-            <div class="producto-card__meta">
-              <span class="producto-card__categoria">{{ producto.categoria }}</span>
-              @if (producto.grados > 0) {
-                <span class="producto-card__grados">{{ producto.grados }}°</span>
-              }
-            </div>
-
-            <h3 class="producto-card__nombre">{{ producto.nombre }}</h3>
-            <p class="producto-card__marca">{{ producto.marca }}</p>
-
-            <div class="producto-card__volumen">
-              <span>{{ producto.volumen }}</span>
-            </div>
-
-            <div class="producto-card__footer">
-              <div class="producto-card__precios">
-                @if (producto.precioOriginal) {
-                  <span class="producto-card__precio-original">
-                    {{ formatearPrecio(producto.precioOriginal) }}
-                  </span>
-                }
-                <span class="producto-card__precio">{{ formatearPrecio(producto.precio) }}</span>
-              </div>
-
-              <button
-                class="producto-card__btn"
-                [class.producto-card__btn--agregado]="estaAgregado(producto.id)"
-                (click)="agregarAlCarrito(producto); $event.stopPropagation()"
-                [disabled]="estaAgregado(producto.id)">
-                @if (estaAgregado(producto.id)) {
-                  <span>✓ Agregado</span>
-                } @else {
-                  <span>+ Agregar</span>
-                }
-              </button>
-            </div>
-          </div>
-        </article>
-      }
-    </div>
   }
 </section>

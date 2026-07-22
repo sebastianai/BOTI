@@ -1,8 +1,8 @@
 <div class="portal-layout">
-  <app-header (toggleCarrito)="carritoAbierto.set(!carritoAbierto())" (selectCategoria)="seleccionarCategoria($event)">
+  <app-header (toggleCarrito)="carritoAbierto.set(!carritoAbierto())">
   </app-header>
 
-  <main class="portal-main">
+  <main class="portal-main" [class.portal-main--login]="esLogin()">
     <router-outlet></router-outlet>
 
     @if (!hasChild()) {
@@ -10,15 +10,20 @@
       <app-packs-portal></app-packs-portal>
       <app-top-ventas></app-top-ventas>
       <app-promos-portal></app-promos-portal>
-      <app-productos [categoria]="categoriaSeleccionada()"></app-productos>
+      <app-productos></app-productos>
       <app-mapa-local></app-mapa-local>
     }
   </main>
 
-  <app-carrito [abierto]="carritoAbierto()" (cerrar)="carritoAbierto.set(false)">
+  <app-footer></app-footer>
+
+  <app-carrito [abierto]="carritoAbierto()" (cerrar)="carritoAbierto.set(false)" (irAPagar)="abrirResumenCompra()">
   </app-carrito>
 
   @if (carritoAbierto()) {
     <div class="overlay overlay--carrito" (click)="carritoAbierto.set(false)"></div>
   }
+
+  <app-resumen-compra [abierto]="resumenCompraAbierto()" (cerrar)="resumenCompraAbierto.set(false)">
+  </app-resumen-compra>
 </div>

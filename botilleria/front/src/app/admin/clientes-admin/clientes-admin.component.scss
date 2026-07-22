@@ -1,0 +1,304 @@
+.cli-admin {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 60px;
+
+  @media (max-width: 767px) { padding: 20px 16px 40px; }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  &__titulo    { font-size: 24px; font-weight: 800; color: var(--c-text); }
+  &__subtitulo { font-size: 14px; color: var(--c-text-muted); margin-top: 4px; }
+
+  &__alerta {
+    background: color-mix(in srgb, #dc3545 8%, transparent);
+    color: #dc3545;
+    border: 1px solid color-mix(in srgb, #dc3545 25%, transparent);
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  &__filtros {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  &__busqueda {
+    flex: 1;
+    min-width: 220px;
+    padding: 9px 14px;
+    border: 1.5px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--c-text);
+    background: var(--c-surface);
+
+    &:focus { border-color: var(--c-primary); outline: none; }
+  }
+
+  &__estado {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--c-text-muted);
+    font-size: 15px;
+  }
+}
+
+// ─── Tabla principal ──────────────────────────────────────────────────────────
+.cli-tabla-wrap {
+  overflow-x: auto;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+}
+
+.cli-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+
+  thead th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--c-text-muted);
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--c-border);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--c-border);
+    transition: background 0.15s;
+    &:hover { background: var(--c-surface-alt); }
+    &:last-child { border-bottom: none; }
+  }
+
+  td {
+    padding: 12px 16px;
+    font-size: 14px;
+    color: var(--c-text);
+    vertical-align: middle;
+  }
+
+  &__num    { font-weight: 700; font-size: 13px; }
+  &__nombre { font-weight: 600; font-size: 14px; display: block; }
+  &__sub    { font-size: 12px; color: var(--c-text-muted); display: block; margin-top: 2px; }
+  &__fecha  { font-size: 12px; color: var(--c-text-muted); white-space: nowrap; }
+  &__centro { text-align: center; }
+  &__total  { font-weight: 700; white-space: nowrap; }
+}
+
+// ─── Badges ───────────────────────────────────────────────────────────────────
+.cli-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--c-primary) 12%, transparent);
+  color: var(--c-primary);
+
+  &--inactivo {
+    background: color-mix(in srgb, #dc3545 12%, transparent);
+    color: #dc3545;
+  }
+}
+
+.ped-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+
+  &--pendiente  { background: color-mix(in srgb, #b45309 12%, transparent); color: #b45309; }
+  &--confirmado { background: color-mix(in srgb, #1d6fa4 12%, transparent); color: #1d6fa4; }
+  &--en_camino  { background: color-mix(in srgb, #7c3aed 12%, transparent); color: #7c3aed; }
+  &--entregado  { background: color-mix(in srgb, #15803d 12%, transparent); color: #15803d; }
+  &--cancelado  { background: color-mix(in srgb, #dc3545 12%, transparent); color: #dc3545; }
+}
+
+// ─── Botones ──────────────────────────────────────────────────────────────────
+.btn {
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  transition: var(--transition);
+  white-space: nowrap;
+
+  &--sm { padding: 6px 12px; font-size: 12px; }
+
+  &--secundario {
+    background: var(--c-surface-alt);
+    color: var(--c-text);
+    border: 1px solid var(--c-border);
+    &:hover { background: var(--c-border); }
+  }
+}
+
+// ─── Modal de detalle ─────────────────────────────────────────────────────────
+.cli-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  z-index: 200;
+  animation: fadeIn .2s ease;
+
+  @media (max-width: 767px) { align-items: flex-end; justify-content: stretch; }
+}
+
+.cli-modal {
+  background: var(--c-surface);
+  width: 100%;
+  max-width: 560px;
+  height: 100vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 767px) {
+    max-width: 100%;
+    height: 90vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--c-border);
+    position: sticky;
+    top: 0;
+    background: var(--c-surface);
+    z-index: 1;
+  }
+
+  &__header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__num {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--c-text);
+  }
+
+  &__close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--c-text-muted);
+    transition: var(--transition);
+    &:hover { background: var(--c-surface-alt); color: var(--c-text); }
+  }
+
+  &__body {
+    padding: 0 0 32px;
+    flex: 1;
+  }
+}
+
+// ─── Secciones del modal ──────────────────────────────────────────────────────
+.cli-seccion {
+  padding: 20px 24px 0;
+
+  &__titulo {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--c-text-muted);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--c-border);
+  }
+}
+
+.cli-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+
+  @media (max-width: 480px) { grid-template-columns: 1fr; }
+}
+
+.cli-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 14px;
+  color: var(--c-text);
+
+  &--ancho { grid-column: 1 / -1; }
+
+  &__label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--c-text-muted);
+  }
+
+  &--total span:last-child {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--c-primary);
+  }
+}
+
+// ─── Tabla de pedidos dentro del detalle ───────────────────────────────────────
+.cli-items-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  thead th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--c-text-muted);
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--c-border);
+  }
+
+  tbody td {
+    padding: 9px 8px;
+    border-bottom: 1px solid var(--c-border);
+    vertical-align: middle;
+    color: var(--c-text);
+    &:last-child { border-bottom: none; }
+  }
+
+  &__num { text-align: right; white-space: nowrap; }
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

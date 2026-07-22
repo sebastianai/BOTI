@@ -1,0 +1,341 @@
+@import '../../../../styles/mixins';
+
+/* ========== DESKTOP ========== */
+.categoria {
+  padding: 0 24px 40px;
+  max-width: 1600px;
+  margin: 0 auto;
+
+  // Reutiliza .section-title (mismas líneas gruesas que el resto del portal:
+  // Packs, Top Ventas, etc.), solo se ajusta el margen superior y el tamaño
+  // del título porque acá es el H1 de la página, no un encabezado de sección.
+  &__titulo-row {
+    margin: 8px 0 24px;
+  }
+
+  &__titulo {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--c-text);
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+
+  &__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  &__count {
+    font-size: 13px;
+    color: var(--c-text-muted);
+  }
+
+  &__orden {
+    padding: 10px 16px;
+    border-radius: var(--radius-pill);
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--c-primary);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+
+    &:hover { background: var(--c-primary-light); }
+  }
+
+  // El layout entero se divide en 4 columnas iguales (mismo ancho + mismo
+  // gap adentro y afuera), así la barra lateral ocupa exactamente el mismo
+  // espacio que un producto, y entre los 4 usan el ancho completo disponible.
+  &__layout {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  &__sidebar {
+    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: sticky;
+    top: calc(var(--header-h) + 20px);
+  }
+
+  &__productos {
+    grid-column: 2 / -1;
+  }
+
+  &__vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 80px 20px;
+    text-align: center;
+
+    span { font-size: 48px; }
+    p { font-size: 15px; font-weight: 600; color: var(--c-text); margin: 0; }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+}
+
+/* ── Filtros ── */
+.categoria__filtro {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.categoria__filtro-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--c-text);
+  background: var(--c-surface);
+  cursor: pointer;
+  transition: var(--transition);
+
+  &:hover { background: var(--c-surface-alt); }
+}
+
+.categoria__chevron {
+  transition: transform 0.2s;
+  color: var(--c-text-muted);
+
+  &--abierto { transform: rotate(180deg); }
+}
+
+.categoria__filtro-body {
+  padding: 4px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--c-border);
+  padding-top: 12px;
+}
+
+.categoria__filtro-vacio {
+  font-size: 12.5px;
+  color: var(--c-text-muted);
+}
+
+.categoria__precio-campos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  span { color: var(--c-text-muted); }
+
+  input {
+    width: 0;
+    flex: 1;
+    padding: 8px 10px;
+    border: 1.5px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--c-text);
+    background: var(--c-surface);
+
+    &:focus { border-color: var(--c-primary); outline: none; }
+  }
+}
+
+.categoria__check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--c-text);
+  cursor: pointer;
+
+  input {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--c-primary);
+    cursor: pointer;
+  }
+}
+
+.categoria__limpiar {
+  align-self: flex-start;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  padding: 6px 4px;
+  transition: color 0.2s;
+
+  &:hover { color: var(--c-text); }
+}
+
+.categoria__banner {
+  overflow: hidden;
+  border: 1px solid var(--c-border);
+
+  img { width: 100%; display: block; }
+}
+
+/* ── Tarjeta de producto (misma apariencia que el resto del portal) ── */
+.producto-card {
+  background: var(--c-surface);
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--c-border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: var(--transition);
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--c-primary) 30%, transparent);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
+  }
+
+  &--agregado { border-color: var(--c-success); }
+
+  &__imagen { @include imagen-producto-escritorio; }
+  &__emoji {
+    font-size: 56px;
+    line-height: 1;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  }
+  &__foto { width: 100%; height: 100%; object-fit: cover; }
+
+  &__oferta-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #f4e915;
+    color: #000;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+
+  &__body {
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 4px;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+  }
+
+  &__categoria { @include categoria-producto-escritorio; }
+  &__grados    { @include grados-producto-escritorio; }
+  &__nombre    { @include titulo-producto-escritorio; }
+  &__marca     { @include marca-producto-escritorio; flex: 1; }
+  &__volumen   { @include volumen-producto-escritorio; }
+
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--c-border);
+  }
+
+  &__precios { display: flex; flex-direction: column; gap: 1px; }
+  &__precio-original { font-size: 11px; color: var(--c-text-muted); text-decoration: line-through; }
+  &__precio { font-size: 18px; font-weight: 800; color: var(--c-primary); }
+
+  &__btn {
+    background: var(--c-primary);
+    color: #fff;
+    padding: 9px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: var(--transition);
+    flex-shrink: 0;
+
+    &:hover:not(:disabled) { background: var(--c-primary-light); transform: translateY(-1px); }
+    &:active:not(:disabled) { transform: translateY(0); }
+    &--agregado { background: var(--c-success); cursor: default; }
+    &:disabled  { opacity: 1; }
+  }
+}
+
+/* ========== TABLET (max-width: 1023px): sin sidebar, 2 columnas ========== */
+@media (max-width: 1023px) {
+  .categoria__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .categoria__sidebar {
+    display: none;
+  }
+
+  .categoria__productos {
+    grid-column: 1;
+  }
+
+  .categoria__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ========== MOBILE (max-width: 767px) ========== */
+@media (max-width: 767px) {
+  .categoria {
+    padding: 0 16px 30px;
+
+    &__titulo { font-size: 20px; }
+    &__grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  }
+
+  .producto-card {
+    &__imagen { height: 110px; }
+    &__emoji  { font-size: 44px; }
+    &__body   { padding: 10px 12px 12px; }
+    &__nombre { font-size: 13px; }
+    &__precio { font-size: 16px; }
+
+    &__footer {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      padding-top: 10px;
+    }
+
+    &__btn { padding: 9px; text-align: center; width: 100%; }
+  }
+}
+
+/* ========== EXTRA SMALL (max-width: 420px) ========== */
+@media (max-width: 420px) {
+  .categoria__grid {
+    grid-template-columns: 1fr;
+  }
+}

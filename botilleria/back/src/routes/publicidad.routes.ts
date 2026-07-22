@@ -15,12 +15,26 @@ function imgUrl(filename: string | null): string | null {
 
 publicidadRouter.get('/', async (req, res) => {
   try {
-    const { formato } = req.query;
-    const query = formato
-      ? `SELECT * FROM publicidad WHERE activo = true AND formato = $1 ORDER BY orden ASC, id ASC`
-      : `SELECT * FROM publicidad WHERE activo = true ORDER BY orden ASC, id ASC`;
-    const params = formato ? [formato] : [];
-    const result = await pool.query(query, params);
+    const { formato, categoria_producto } = req.query;
+    const conditions: string[] = ['activo = true'];
+    const params: unknown[] = [];
+
+    if (formato) { params.push(formato); conditions.push(`formato = $${params.length}`); }
+
+    if (categoria_producto) {
+      // Panel lateral de una categoría: solo los banners asignados a esa categoría.
+      params.push(categoria_producto);
+      conditions.push(`categoria_producto = $${params.length}`);
+    } else {
+      // Carrusel del inicio: nunca mostrar banners reservados para una categoría,
+      // porque su formato no calza con el carrusel principal.
+      conditions.push(`categoria_producto IS NULL`);
+    }
+
+    const result = await pool.query(
+      `SELECT * FROM publicidad WHERE ${conditions.join(' AND ')} ORDER BY orden ASC, id ASC`,
+      params
+    );
     res.json(result.rows);
   } catch {
     res.status(500).json({ error: 'Error al obtener publicidad' });
@@ -37,12 +51,12 @@ publicidadRouter.get('/todos', authMiddleware, async (_req, res) => {
 });
 
 publicidadRouter.post('/', authMiddleware, async (req, res) => {
-  const { titulo, descripcion, enlace, orden, activo, formato } = req.body;
+  const { titulo, descripcion, enlace, orden, activo, formato, categoria_producto } = req.body;
   try {
     const result = await pool.query(
-      `INSERT INTO publicidad (titulo, descripcion, enlace, orden, activo, formato)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [titulo ?? null, descripcion ?? null, enlace ?? null, orden ?? 0, activo ?? true, formato ?? 'escritorio']
+      `INSERT INTO publicidad (titulo, descripcion, enlace, orden, activo, formato, categoria_producto)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [titulo ?? null, descripcion ?? null, enlace ?? null, orden ?? 0, activo ?? true, formato ?? 'escritorio', categoria_producto || null]
     );
     res.status(201).json(result.rows[0]);
   } catch {
@@ -51,18 +65,19 @@ publicidadRouter.post('/', authMiddleware, async (req, res) => {
 });
 
 publicidadRouter.put('/:id', authMiddleware, async (req, res) => {
-  const { titulo, descripcion, enlace, orden, activo, formato } = req.body;
+  const { titulo, descripcion, enlace, orden, activo, formato, categoria_producto } = req.body;
   try {
     const result = await pool.query(
       `UPDATE publicidad SET
-        titulo      = COALESCE($1, titulo),
-        descripcion = COALESCE($2, descripcion),
-        enlace      = COALESCE($3, enlace),
-        orden       = COALESCE($4, orden),
-        activo      = COALESCE($5, activo),
-        formato     = COALESCE($6, formato)
-       WHERE id = $7 RETURNING *`,
-      [titulo, descripcion, enlace, orden, activo, formato, req.params.id]
+        titulo             = COALESCE($1, titulo),
+        descripcion        = COALESCE($2, descripcion),
+        enlace             = COALESCE($3, enlace),
+        orden              = COALESCE($4, orden),
+        activo             = COALESCE($5, activo),
+        formato            = COALESCE($6, formato),
+        categoria_producto = $7
+       WHERE id = $8 RETURNING *`,
+      [titulo, descripcion, enlace, orden, activo, formato, categoria_producto || null, req.params.id]
     );
     if (!result.rows[0]) { res.status(404).json({ error: 'No encontrado' }); return; }
     res.json(result.rows[0]);

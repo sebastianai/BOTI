@@ -21,12 +21,8 @@
     <div class="carrito__items">
       @for (item of carritoService.items(); track item.producto.id) {
         <div class="carrito-item">
-          <div class="carrito-item__imagen" [style.background]="item.producto.imagen ? 'none' : item.producto.colorFondo">
-            @if (item.producto.imagen) {
-              <img [src]="urlImagenProducto(item.producto.imagen)" [alt]="item.producto.nombre" />
-            } @else {
-              <span>{{ item.producto.emoji }}</span>
-            }
+          <div class="carrito-item__imagen">
+            <img [src]="urlImagenProducto(item.producto.imagen)" [alt]="item.producto.nombre" />
           </div>
 
           <div class="carrito-item__info">
@@ -84,8 +80,12 @@
         </div>
       </div>
 
-      <button class="carrito__checkout-btn">
+      <button class="carrito__checkout-btn" (click)="irAPagar.emit()">
         Ir a pagar → {{ formatearPrecio(carritoService.totalPrecio()) }}
+      </button>
+
+      <button class="carrito__cotizar-btn" (click)="cotizar()">
+        📋 Cotizar por mayor
       </button>
 
       <button class="carrito__vaciar-btn" (click)="vaciar()">

@@ -7,17 +7,19 @@ export const pedidosRouter = Router();
 
 // GET /api/pedidos — admin: lista todos con filtros opcionales
 pedidosRouter.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
-  const { estado, canal, medio_pago, busqueda, desde, hasta } = req.query;
+  const { estado, canal, medio_pago, busqueda, desde, hasta, sucursal_id } = req.query;
   try {
     const conditions: string[] = [];
     const params: unknown[] = [];
     let i = 1;
 
-    if (estado)     { conditions.push(`p.estado = $${i++}`);       params.push(estado); }
-    if (canal)      { conditions.push(`p.canal = $${i++}`);        params.push(canal); }
-    if (medio_pago) { conditions.push(`p.medio_pago = $${i++}`);   params.push(medio_pago); }
-    if (desde)      { conditions.push(`p.fecha_pedido >= $${i++}`); params.push(desde); }
-    if (hasta)      { conditions.push(`p.fecha_pedido <= $${i++}`); params.push(hasta); }
+    if (estado)      { conditions.push(`p.estado = $${i++}`);       params.push(estado); }
+    if (canal)       { conditions.push(`p.canal = $${i++}`);        params.push(canal); }
+    if (medio_pago)  { conditions.push(`p.medio_pago = $${i++}`);   params.push(medio_pago); }
+    if (desde)       { conditions.push(`p.fecha_pedido >= $${i++}`); params.push(desde); }
+    if (hasta)       { conditions.push(`p.fecha_pedido <= $${i++}`); params.push(hasta); }
+    if (sucursal_id === 'sin_asignar') { conditions.push(`p.sucursal_id IS NULL`); }
+    else if (sucursal_id) { conditions.push(`p.sucursal_id = $${i++}`); params.push(sucursal_id); }
     if (busqueda) {
       conditions.push(`(p.nombre_cliente ILIKE $${i} OR p.numero_pedido ILIKE $${i} OR p.telefono_cliente ILIKE $${i})`);
       params.push(`%${busqueda}%`);
@@ -27,11 +29,13 @@ pedidosRouter.get('/', authMiddleware, async (req: AuthRequest, res: Response) =
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const result = await pool.query(
       `SELECT p.*,
+              s.nombre AS sucursal_nombre,
               COUNT(pi.id)::int AS total_items
        FROM pedidos p
        LEFT JOIN pedido_items pi ON pi.pedido_id = p.id
+       LEFT JOIN sucursales s ON s.id = p.sucursal_id
        ${where}
-       GROUP BY p.id
+       GROUP BY p.id, s.nombre
        ORDER BY p.fecha_pedido DESC`,
       params
     );
@@ -44,7 +48,13 @@ pedidosRouter.get('/', authMiddleware, async (req: AuthRequest, res: Response) =
 // GET /api/pedidos/:id — admin: detalle con items
 pedidosRouter.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const pedido = await pool.query(`SELECT * FROM pedidos WHERE id = $1`, [req.params.id]);
+    const pedido = await pool.query(
+      `SELECT p.*, s.nombre AS sucursal_nombre
+       FROM pedidos p
+       LEFT JOIN sucursales s ON s.id = p.sucursal_id
+       WHERE p.id = $1`,
+      [req.params.id]
+    );
     if (!pedido.rows[0]) { res.status(404).json({ error: 'Pedido no encontrado' }); return; }
 
     const items = await pool.query(
@@ -61,7 +71,7 @@ pedidosRouter.get('/:id', authMiddleware, async (req: AuthRequest, res: Response
 pedidosRouter.post('/', async (req, res) => {
   const {
     nombre_cliente, rut_cliente, telefono_cliente, email_cliente, direccion_cliente,
-    medio_pago, canal = 'portal', costo_envio = 0, notas, items
+    medio_pago, canal = 'portal', costo_envio = 0, notas, items, sucursal_id
   } = req.body;
 
   if (!nombre_cliente) { res.status(400).json({ error: 'Nombre del cliente requerido' }); return; }
@@ -74,16 +84,43 @@ pedidosRouter.post('/', async (req, res) => {
     // Calcula subtotal leyendo precios actuales de la BD
     let subtotal = 0;
     const itemsResueltos: Array<{
-      producto_id: number; nombre_producto: string; categoria: string | null;
+      producto_id: number | null; pack_id: number | null; nombre_producto: string; categoria: string | null;
       precio_unitario: number; precio_original: number | null; cantidad: number; subtotal: number;
     }> = [];
 
-    for (const item of items as Array<{ producto_id: number; cantidad: number }>) {
-      if (!item.producto_id || !item.cantidad || item.cantidad < 1) {
+    for (const item of items as Array<{ producto_id?: number; pack_id?: number; cantidad: number }>) {
+      if ((!item.producto_id && !item.pack_id) || !item.cantidad || item.cantidad < 1) {
         await client.query('ROLLBACK');
         res.status(400).json({ error: `Item inválido: ${JSON.stringify(item)}` });
         return;
       }
+
+      if (item.pack_id) {
+        const pack = await client.query(
+          `SELECT id, nombre, precio FROM packs WHERE id = $1`,
+          [item.pack_id]
+        );
+        if (!pack.rows[0]) {
+          await client.query('ROLLBACK');
+          res.status(400).json({ error: `Pack ${item.pack_id} no encontrado` });
+          return;
+        }
+        const pk = pack.rows[0];
+        const itemSubtotal = parseFloat(pk.precio) * item.cantidad;
+        subtotal += itemSubtotal;
+        itemsResueltos.push({
+          producto_id: null,
+          pack_id: pk.id,
+          nombre_producto: pk.nombre,
+          categoria: 'Pack',
+          precio_unitario: parseFloat(pk.precio),
+          precio_original: null,
+          cantidad: item.cantidad,
+          subtotal: itemSubtotal,
+        });
+        continue;
+      }
+
       const prod = await client.query(
         `SELECT id, nombre, categoria, precio, precio_original FROM productos WHERE id = $1`,
         [item.producto_id]
@@ -98,6 +135,7 @@ pedidosRouter.post('/', async (req, res) => {
       subtotal += itemSubtotal;
       itemsResueltos.push({
         producto_id: p.id,
+        pack_id: null,
         nombre_producto: p.nombre,
         categoria: p.categoria ?? null,
         precio_unitario: parseFloat(p.precio),
@@ -112,11 +150,12 @@ pedidosRouter.post('/', async (req, res) => {
     const pedidoResult = await client.query(
       `INSERT INTO pedidos
          (nombre_cliente, rut_cliente, telefono_cliente, email_cliente, direccion_cliente,
-          medio_pago, canal, subtotal, costo_envio, total, notas)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+          medio_pago, canal, subtotal, costo_envio, total, notas, sucursal_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
        RETURNING *`,
       [nombre_cliente, rut_cliente ?? null, telefono_cliente ?? null, email_cliente ?? null,
-       direccion_cliente ?? null, medio_pago ?? null, canal, subtotal, costo_envio, total, notas ?? null]
+       direccion_cliente ?? null, medio_pago ?? null, canal, subtotal, costo_envio, total, notas ?? null,
+       sucursal_id ?? null]
     );
     const pedido = pedidoResult.rows[0];
 
@@ -127,9 +166,9 @@ pedidosRouter.post('/', async (req, res) => {
 
     for (const item of itemsResueltos) {
       await client.query(
-        `INSERT INTO pedido_items (pedido_id, producto_id, nombre_producto, categoria, precio_unitario, precio_original, cantidad, subtotal)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-        [pedido.id, item.producto_id, item.nombre_producto, item.categoria,
+        `INSERT INTO pedido_items (pedido_id, producto_id, pack_id, nombre_producto, categoria, precio_unitario, precio_original, cantidad, subtotal)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [pedido.id, item.producto_id, item.pack_id, item.nombre_producto, item.categoria,
          item.precio_unitario, item.precio_original, item.cantidad, item.subtotal]
       );
     }
@@ -166,6 +205,21 @@ pedidosRouter.put('/:id/estado', authMiddleware, async (req: AuthRequest, res: R
     res.json(result.rows[0]);
   } catch {
     res.status(500).json({ error: 'Error al actualizar el estado' });
+  }
+});
+
+// PUT /api/pedidos/:id/sucursal — admin: asigna o desasigna la sucursal del pedido
+pedidosRouter.put('/:id/sucursal', authMiddleware, async (req: AuthRequest, res: Response) => {
+  const { sucursal_id } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE pedidos SET sucursal_id = $1, actualizado_en = NOW() WHERE id = $2 RETURNING *`,
+      [sucursal_id ?? null, req.params.id]
+    );
+    if (!result.rows[0]) { res.status(404).json({ error: 'Pedido no encontrado' }); return; }
+    res.json(result.rows[0]);
+  } catch {
+    res.status(500).json({ error: 'Error al asignar la sucursal' });
   }
 });
 

@@ -8,12 +8,8 @@
       <div class="top-ventas__scroll" #track (scroll)="onScroll()">
         @for (p of productos(); track p.id) {
           <article class="tv-card" [class.tv-card--agregado]="estaAgregado(p.id)" (click)="onProductoClick(p)">
-            <div class="tv-card__imagen" [style.background]="p.imagen ? 'none' : p.colorFondo">
-              @if (p.imagen) {
-                <img [src]="urlImagen(p.imagen)" [alt]="p.nombre" class="tv-card__foto" />
-              } @else {
-                <span class="tv-card__emoji">{{ p.emoji }}</span>
-              }
+            <div class="tv-card__imagen">
+              <img [src]="urlImagen(p.imagen)" [alt]="p.nombre" class="tv-card__foto" />
               @if (p.precioOriginal) {
                 <span class="tv-card__oferta">OFERTA</span>
               }

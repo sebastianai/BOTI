@@ -1,0 +1,179 @@
+<div class="cli-admin">
+
+  <!-- Header -->
+  <header class="cli-admin__header">
+    <div>
+      <h1 class="cli-admin__titulo">Clientes</h1>
+      <p class="cli-admin__subtitulo">{{ totalClientes() }} clientes registrados · {{ totalConPedidos() }} con pedidos</p>
+    </div>
+    <button class="btn btn--secundario" (click)="cargar()">↻ Actualizar</button>
+  </header>
+
+  @if (errorMsg()) {
+    <div class="cli-admin__alerta">{{ errorMsg() }}</div>
+  }
+
+  <!-- Filtros -->
+  <div class="cli-admin__filtros">
+    <input class="cli-admin__busqueda" type="search" placeholder="Buscar por nombre, apellido, RUT o correo…"
+      [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)" />
+  </div>
+
+  <!-- Tabla -->
+  @if (cargando()) {
+    <div class="cli-admin__estado">Cargando clientes…</div>
+  } @else if (clientesFiltrados().length === 0) {
+    <div class="cli-admin__estado">No hay clientes que coincidan.</div>
+  } @else {
+    <div class="cli-tabla-wrap">
+      <table class="cli-tabla">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>RUT</th>
+            <th>Contacto</th>
+            <th>Pedidos</th>
+            <th>Total gastado</th>
+            <th>Registrado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of clientesFiltrados(); track c.id) {
+            <tr>
+              <td>
+                <span class="cli-tabla__nombre">{{ c.nombre }} {{ c.apellido }}</span>
+              </td>
+              <td class="cli-tabla__sub">{{ c.rut }}</td>
+              <td>
+                <span class="cli-tabla__sub">{{ c.correo }}</span>
+                @if (c.telefono) {
+                  <span class="cli-tabla__sub">{{ c.telefono }}</span>
+                }
+              </td>
+              <td class="cli-tabla__centro">
+                @if (c.total_pedidos > 0) {
+                  <span class="cli-badge">{{ c.total_pedidos }}</span>
+                } @else {
+                  <span class="cli-tabla__sub">0</span>
+                }
+              </td>
+              <td class="cli-tabla__total">{{ clp(c.total_gastado) }}</td>
+              <td class="cli-tabla__fecha">{{ fecha(c.creado_en) }}</td>
+              <td>
+                <button class="btn btn--secundario btn--sm" (click)="verDetalle(c)">Ver</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Modal detalle -->
+@if (detalle()) {
+  <div class="cli-overlay" (click)="cerrarDetalle()">
+    <div class="cli-modal" (click)="$event.stopPropagation()">
+
+      <div class="cli-modal__header">
+        <div class="cli-modal__header-left">
+          <span class="cli-modal__num">{{ detalle()!.nombre }} {{ detalle()!.apellido }}</span>
+          @if (!detalle()!.activo) {
+            <span class="cli-badge cli-badge--inactivo">Inactivo</span>
+          }
+        </div>
+        <button class="cli-modal__close" (click)="cerrarDetalle()">✕</button>
+      </div>
+
+      <div class="cli-modal__body">
+
+        <!-- Datos del cliente -->
+        <section class="cli-seccion">
+          <h3 class="cli-seccion__titulo">👤 Datos del cliente</h3>
+          <div class="cli-grid">
+            <div class="cli-dato">
+              <span class="cli-dato__label">RUT</span>
+              <span>{{ detalle()!.rut }}</span>
+            </div>
+            <div class="cli-dato">
+              <span class="cli-dato__label">Correo</span>
+              <span>{{ detalle()!.correo }}</span>
+            </div>
+            @if (detalle()!.telefono) {
+              <div class="cli-dato">
+                <span class="cli-dato__label">Teléfono</span>
+                <span>{{ detalle()!.telefono }}</span>
+              </div>
+            }
+            @if (detalle()!.fecha_nacimiento) {
+              <div class="cli-dato">
+                <span class="cli-dato__label">Fecha de nacimiento</span>
+                <span>{{ fecha(detalle()!.fecha_nacimiento) }}</span>
+              </div>
+            }
+            <div class="cli-dato">
+              <span class="cli-dato__label">Género</span>
+              <span>{{ labelGenero(detalle()!.genero) }}</span>
+            </div>
+            <div class="cli-dato">
+              <span class="cli-dato__label">Cliente desde</span>
+              <span>{{ fecha(detalle()!.creado_en) }}</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Resumen de compras -->
+        <section class="cli-seccion">
+          <h3 class="cli-seccion__titulo">🧾 Resumen de compras</h3>
+          <div class="cli-grid">
+            <div class="cli-dato">
+              <span class="cli-dato__label">Pedidos totales</span>
+              <span>{{ detalle()!.total_pedidos }}</span>
+            </div>
+            <div class="cli-dato cli-dato--total">
+              <span class="cli-dato__label">Total gastado</span>
+              <span>{{ clp(detalle()!.total_gastado) }}</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Pedidos -->
+        <section class="cli-seccion">
+          <h3 class="cli-seccion__titulo">🛒 Pedidos</h3>
+          @if (cargandoDet()) {
+            <p class="cli-admin__estado">Cargando pedidos…</p>
+          } @else if (detalle()!.pedidos.length === 0) {
+            <p class="cli-admin__estado">Este cliente aún no tiene pedidos.</p>
+          } @else {
+            <table class="cli-items-tabla">
+              <thead>
+                <tr>
+                  <th>N° Pedido</th>
+                  <th>Fecha</th>
+                  <th>Items</th>
+                  <th class="cli-items-tabla__num">Total</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of detalle()!.pedidos; track p.id) {
+                  <tr>
+                    <td class="cli-tabla__num">{{ p.numero_pedido || '#' + p.id }}</td>
+                    <td class="cli-tabla__fecha">{{ fecha(p.fecha_pedido, true) }}</td>
+                    <td>{{ p.total_items }}</td>
+                    <td class="cli-items-tabla__num cli-tabla__total">{{ clp(p.total) }}</td>
+                    <td>
+                      <span class="ped-badge ped-badge--{{ p.estado }}">{{ labelEstado(p.estado) }}</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </section>
+
+      </div>
+    </div>
+  </div>
+}

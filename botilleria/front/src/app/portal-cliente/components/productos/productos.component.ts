@@ -1,6 +1,7 @@
 import {
   Component, input, inject, signal, computed,
-  ViewChild, ElementRef, effect, afterNextRender, DestroyRef
+  ViewChild, ViewChildren, QueryList, ElementRef,
+  effect, afterNextRender, DestroyRef
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -12,6 +13,12 @@ import { urlImagenProducto } from '../../../core/imagen.util';
 import { VasosLoadingComponent } from '../vasos-loading/vasos-loading.component';
 
 type Orden = 'default' | 'precio-asc' | 'precio-desc';
+
+interface CarruselState { pos: number; max: number; }
+interface BtnPos { top: string; prevL: string; nextL: string; }
+interface GrupoCategoria { categoria: string; productos: Producto[]; }
+
+const OCULTO: BtnPos = { top: '-9999px', prevL: '-9999px', nextL: '-9999px' };
 
 @Component({
   selector: 'app-productos',
@@ -61,12 +68,21 @@ export class ProductosComponent {
     return items;
   });
 
-  /* ── Carousel state ── */
+  protected readonly productosAgrupados = computed<GrupoCategoria[]>(() => {
+    if (this.categoria() !== 'Todos') return [];
+    const map = new Map<string, Producto[]>();
+    for (const p of this.productosFiltrados()) {
+      if (!map.has(p.categoria)) map.set(p.categoria, []);
+      map.get(p.categoria)!.push(p);
+    }
+    return Array.from(map.entries()).map(([categoria, productos]) => ({ categoria, productos }));
+  });
+
+  /* ── Single carousel state (category selected) ── */
   private readonly scrollPos = signal(0);
   private readonly scrollMax = signal(9999);
   protected readonly puedeAnterior = computed(() => this.scrollPos() > 4);
   protected readonly puedeSiguiente = computed(() => this.scrollPos() < this.scrollMax() - 4);
-
   protected readonly btnTop   = signal('-9999px');
   protected readonly btnPrevL = signal('-9999px');
   protected readonly btnNextL = signal('-9999px');
@@ -74,22 +90,44 @@ export class ProductosComponent {
   @ViewChild('wrapper') wrapperRef!: ElementRef<HTMLDivElement>;
   @ViewChild('track')   trackRef!: ElementRef<HTMLDivElement>;
 
+  /* ── Multi carousel state (Todos grouped) ── */
+  protected scrollStates   = signal<CarruselState[]>([]);
+  protected btnPositions   = signal<BtnPos[]>([]);
+
+  @ViewChildren('groupWrapper') groupWrapperRefs!: QueryList<ElementRef<HTMLDivElement>>;
+  @ViewChildren('groupTrack')   groupTrackRefs!: QueryList<ElementRef<HTMLDivElement>>;
+
   constructor() {
+    // Single carousel (specific category)
     effect(() => {
-      /* Re-calculate when category or products change (carousel mode may have appeared) */
-      const _ = this.esCarrusel();
-      const __ = this.productosFiltrados().length;
-      if (this.esCarrusel()) {
+      const esCarrusel = this.esCarrusel();
+      this.productosFiltrados();
+      if (esCarrusel) {
         setTimeout(() => { this.actualizarBounds(); this.actualizarPosBtn(); }, 100);
       } else {
         this.btnTop.set('-9999px');
         this.btnPrevL.set('-9999px');
         this.btnNextL.set('-9999px');
       }
-    });
+    }, { allowSignalWrites: true });
+
+    // Group carousels (Todos mode)
+    effect(() => {
+      const grupos = this.productosAgrupados();
+      if (grupos.length === 0) return;
+      this.scrollStates.set(grupos.map(() => ({ pos: 0, max: 9999 })));
+      this.btnPositions.set(grupos.map(() => ({ ...OCULTO })));
+      setTimeout(() => { grupos.forEach((_, i) => this.actualizarPosBtnGrupo(i)); }, 100);
+    }, { allowSignalWrites: true });
 
     afterNextRender(() => {
-      const onUpdate = () => { if (this.esCarrusel()) this.actualizarPosBtn(); };
+      const onUpdate = () => {
+        if (this.esCarrusel()) {
+          this.actualizarPosBtn();
+        } else {
+          this.productosAgrupados().forEach((_, i) => this.actualizarPosBtnGrupo(i));
+        }
+      };
       window.addEventListener('scroll', onUpdate, { passive: true });
       window.addEventListener('resize', onUpdate, { passive: true });
       this.destroyRef.onDestroy(() => {
@@ -99,24 +137,60 @@ export class ProductosComponent {
     });
   }
 
+  /* ── Single carousel methods ── */
   protected onScrollTrack(): void { this.actualizarBounds(); }
 
   protected siguiente(): void {
     const el = this.trackRef?.nativeElement;
     if (!el) return;
     const card = el.querySelector<HTMLElement>('.producto-card');
-    const step = card ? card.offsetWidth + 20 : 260;
-    el.scrollBy({ left: step, behavior: 'smooth' });
+    el.scrollBy({ left: (card ? card.offsetWidth + 20 : 260), behavior: 'smooth' });
   }
 
   protected anterior(): void {
     const el = this.trackRef?.nativeElement;
     if (!el) return;
     const card = el.querySelector<HTMLElement>('.producto-card');
-    const step = card ? card.offsetWidth + 20 : 260;
-    el.scrollBy({ left: -step, behavior: 'smooth' });
+    el.scrollBy({ left: -(card ? card.offsetWidth + 20 : 260), behavior: 'smooth' });
   }
 
+  /* ── Group carousel methods ── */
+  protected onScrollGrupo(i: number): void {
+    const el = this.groupTrackRefs.get(i)?.nativeElement;
+    if (!el) return;
+    const states = [...this.scrollStates()];
+    states[i] = { pos: el.scrollLeft, max: el.scrollWidth - el.clientWidth };
+    this.scrollStates.set(states);
+  }
+
+  protected siguienteGrupo(i: number): void {
+    const el = this.groupTrackRefs.get(i)?.nativeElement;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>('.producto-card');
+    el.scrollBy({ left: (card ? card.offsetWidth + 20 : 260), behavior: 'smooth' });
+  }
+
+  protected anteriorGrupo(i: number): void {
+    const el = this.groupTrackRefs.get(i)?.nativeElement;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>('.producto-card');
+    el.scrollBy({ left: -(card ? card.offsetWidth + 20 : 260), behavior: 'smooth' });
+  }
+
+  protected puedeAnteriorGrupo(i: number): boolean {
+    return (this.scrollStates()[i]?.pos ?? 0) > 4;
+  }
+
+  protected puedeSiguienteGrupo(i: number): boolean {
+    const s = this.scrollStates()[i];
+    return s ? s.pos < s.max - 4 : true;
+  }
+
+  protected btnTopGrupo(i: number): string   { return this.btnPositions()[i]?.top   ?? '-9999px'; }
+  protected btnPrevLGrupo(i: number): string  { return this.btnPositions()[i]?.prevL ?? '-9999px'; }
+  protected btnNextLGrupo(i: number): string  { return this.btnPositions()[i]?.nextL ?? '-9999px'; }
+
+  /* ── Shared helpers ── */
   protected agregarAlCarrito(producto: Producto): void {
     this.carritoService.agregar(producto);
     this.productoAgregadoIds.update(s => new Set([...s, producto.id]));
@@ -158,5 +232,18 @@ export class ProductosComponent {
     this.btnTop.set(`${rect.top + rect.height / 2}px`);
     this.btnPrevL.set(`${rect.left - 22}px`);
     this.btnNextL.set(`${rect.right - 22}px`);
+  }
+
+  private actualizarPosBtnGrupo(i: number): void {
+    const wrapper = this.groupWrapperRefs.get(i)?.nativeElement;
+    if (!wrapper) return;
+    const rect = wrapper.getBoundingClientRect();
+    const positions = [...this.btnPositions()];
+    positions[i] = {
+      top:   `${rect.top + rect.height / 2}px`,
+      prevL: `${rect.left - 22}px`,
+      nextL: `${rect.right - 22}px`
+    };
+    this.btnPositions.set(positions);
   }
 }

@@ -14,6 +14,7 @@ export interface Promo {
   orden: number;
   creado_en: string;
   producto_ids: number[];
+  porcentaje_descuento: number | null;
 }
 
 export interface PromoPortal extends Omit<Promo, 'producto_ids'> {

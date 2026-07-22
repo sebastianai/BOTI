@@ -23,10 +23,76 @@
     <div class="admin-productos__alerta">{{ error() }}</div>
   }
 
+  <div class="admin-buscador">
+    <div class="admin-buscador__fila">
+      <input
+        class="admin-buscador__input"
+        type="search"
+        placeholder="🔍 Buscar por nombre o marca..."
+        [ngModel]="busqueda()"
+        (ngModelChange)="busqueda.set($event)"
+        [ngModelOptions]="{ standalone: true }" />
+      <button
+        class="admin-buscador__btn-filtros"
+        [class.admin-buscador__btn-filtros--activo]="filtroPanelAbierto()"
+        (click)="toggleFiltroPanel()">
+        ⚙️ Filtros
+        @if (filtrosActivos() > 0) {
+          <span class="admin-buscador__contador">{{ filtrosActivos() }}</span>
+        }
+      </button>
+      @if (filtrosActivos() > 0) {
+        <button class="btn btn--secundario" (click)="limpiarFiltros()">✕ Limpiar filtros</button>
+      }
+    </div>
+
+    @if (filtroPanelAbierto()) {
+      <div class="admin-filtros">
+        <div class="admin-filtros__grupo">
+          <p class="admin-filtros__titulo">Marca</p>
+          <div class="admin-filtros__lista">
+            @for (marca of marcasDisponibles(); track marca) {
+              <label class="admin-filtros__item">
+                <input type="checkbox" [checked]="filtroMarcas().has(marca)" (change)="toggleFiltroMarca(marca)" />
+                <span>{{ marca }}</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        <div class="admin-filtros__grupo">
+          <p class="admin-filtros__titulo">Tipo</p>
+          <div class="admin-filtros__lista">
+            @for (tipo of tiposDisponibles(); track tipo) {
+              <label class="admin-filtros__item">
+                <input type="checkbox" [checked]="filtroTipos().has(tipo)" (change)="toggleFiltroTipo(tipo)" />
+                <span>{{ tipo }}</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        <div class="admin-filtros__grupo">
+          <p class="admin-filtros__titulo">Stock</p>
+          <div class="admin-filtros__lista">
+            @for (bucket of stockBuckets; track bucket.valor) {
+              <label class="admin-filtros__item">
+                <input type="checkbox" [checked]="filtroStock().has(bucket.valor)" (change)="toggleFiltroStock(bucket.valor)" />
+                <span>{{ bucket.label }}</span>
+              </label>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
   @if (cargando()) {
     <app-vasos-loading mensaje="Cargando productos..." />
   } @else if (productos().length === 0) {
     <div class="admin-productos__estado">No hay productos registrados todavía.</div>
+  } @else if (productosFiltrados().length === 0) {
+    <div class="admin-productos__estado">Ningún producto coincide con la búsqueda o los filtros aplicados.</div>
   } @else {
     <div class="admin-productos__tabla-wrap">
       <table class="admin-tabla">
@@ -43,7 +109,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (producto of productos(); track producto.id) {
+          @for (producto of productosFiltrados(); track producto.id) {
             <tr [class.admin-tabla__fila--seleccionada]="estaSeleccionado(producto.id)">
               <td>
                 <input
@@ -54,12 +120,8 @@
                   [attr.aria-label]="'Seleccionar ' + producto.nombre" />
               </td>
               <td>
-                <div class="admin-tabla__preview" [style.background]="producto.imagen ? 'none' : producto.colorFondo">
-                  @if (producto.imagen) {
-                    <img [src]="urlImagenProducto(producto.imagen)" [alt]="producto.nombre" />
-                  } @else {
-                    <span>{{ producto.emoji }}</span>
-                  }
+                <div class="admin-tabla__preview">
+                  <img [src]="urlImagenProducto(producto.imagen)" [alt]="producto.nombre" />
                 </div>
               </td>
               <td>

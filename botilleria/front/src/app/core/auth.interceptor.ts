@@ -11,7 +11,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   }
   return next(req).pipe(
     catchError(err => {
-      if (err.status === 401) auth.logout();
+      // Solo cerramos la sesión de administrador si esta request efectivamente
+      // llevaba el token de admin adjunto: un 401 en un endpoint público (ej.
+      // login de cliente con credenciales incorrectas) no debe expulsar al admin.
+      if (err.status === 401 && token) auth.logout();
       return throwError(() => err);
     })
   );

@@ -1,0 +1,136 @@
+@if (abierto()) {
+  <div class="rc-overlay" (click)="cerrarModal()">
+    <div class="rc-modal" (click)="$event.stopPropagation()" role="dialog" aria-label="Resumen de compra">
+      <button class="rc-modal__close" (click)="cerrarModal()" aria-label="Cerrar">✕</button>
+
+      <div class="rc-modal__body">
+
+        <!-- Columna principal: stepper + paso actual -->
+        <div class="rc-principal">
+          <div class="rc-stepper">
+            @for (paso of pasos; track paso.valor; let last = $last) {
+              <div class="rc-stepper__paso" [class.rc-stepper__paso--activo]="paso.valor === pasoActual()">
+                <span class="rc-stepper__icono">{{ paso.icono }}</span>
+                <span class="rc-stepper__label">{{ paso.label }}</span>
+              </div>
+              @if (!last) {
+                <div class="rc-stepper__linea"></div>
+              }
+            }
+          </div>
+
+          <app-paso-contacto
+            [hidden]="pasoActual() !== 'contacto'"
+            [(quieroFactura)]="quieroFactura"
+            (avanzarAEntrega)="pasoActual.set('entrega')" />
+
+          <app-paso-entrega
+            [hidden]="pasoActual() !== 'entrega'"
+            [(metodoEntrega)]="metodoEntrega"
+            [(vistaEntrega)]="vistaEntrega"
+            [(tipoRetiro)]="tipoRetiro"
+            [(sucursalActual)]="sucursalActual"
+            [(direccionEntrega)]="direccionEntrega"
+            [(depto)]="depto"
+            [(tipoDespacho)]="tipoDespacho"
+            [(fechaDespachoId)]="fechaDespachoId"
+            (volver)="pasoActual.set('contacto')"
+            (avanzarAPago)="pasoActual.set('pago')" />
+
+          <app-paso-pago
+            [hidden]="pasoActual() !== 'pago'"
+            [metodoEntrega]="metodoEntrega()"
+            [sucursalActual]="sucursalActual()"
+            [tipoRetiro]="tipoRetiro()"
+            [direccionEntrega]="direccionEntrega()"
+            [depto]="depto()"
+            [tipoDespacho]="tipoDespacho()"
+            [fechaDespachoId]="fechaDespachoId()"
+            [quieroFactura]="quieroFactura()"
+            (volver)="pasoActual.set('entrega')" />
+        </div>
+
+        <!-- Columna lateral: resumen de compra -->
+        <div class="rc-lateral">
+          <h2 class="rc-lateral__titulo">Resumen de compra</h2>
+
+          <div class="rc-items">
+            @for (item of carritoService.items(); track item.producto.id) {
+              <div class="rc-item">
+                <div class="rc-item__imagen">
+                  <img [src]="urlImagenProducto(item.producto.imagen)" [alt]="item.producto.nombre" />
+                </div>
+
+                <div class="rc-item__info">
+                  <p class="rc-item__nombre">{{ item.producto.nombre }}</p>
+                  <div class="rc-item__qty">
+                    <button (click)="cambiarCantidad(item, -1)" aria-label="Reducir cantidad">−</button>
+                    <span>{{ item.cantidad }}</span>
+                    <button (click)="cambiarCantidad(item, 1)" aria-label="Aumentar cantidad">+</button>
+                  </div>
+                </div>
+
+                <span class="rc-item__precio">{{ formatearPrecio(calcularSubtotal(item)) }}</span>
+
+                <button class="rc-item__eliminar" (click)="remover(item.producto.id)" aria-label="Eliminar producto">🗑️</button>
+              </div>
+            } @empty {
+              <p class="rc-items__vacio">Tu carrito está vacío.</p>
+            }
+          </div>
+
+          <button type="button" class="rc-sugeridos-btn" (click)="toggleSugeridos()">
+            ✨ Mostrar productos sugeridos para ti
+          </button>
+
+          @if (mostrarSugeridos()) {
+            <div class="rc-sugeridos">
+              @if (cargandoSugeridos()) {
+                <p class="rc-sugeridos__estado">Buscando sugerencias...</p>
+              } @else if (productosSugeridos().length === 0) {
+                <p class="rc-sugeridos__estado">No hay más sugerencias por ahora.</p>
+              } @else {
+                @for (p of productosSugeridos(); track p.id) {
+                  <div class="rc-sugerido">
+                    <div class="rc-sugerido__imagen">
+                      <img [src]="urlImagenProducto(p.imagen)" [alt]="p.nombre" />
+                    </div>
+                    <div class="rc-sugerido__info">
+                      <p class="rc-sugerido__nombre">{{ p.nombre }}</p>
+                      <p class="rc-sugerido__precio">{{ formatearPrecio(p.precio) }}</p>
+                    </div>
+                    <button type="button" class="rc-sugerido__add" (click)="agregarSugerido(p)" aria-label="Agregar al carrito">+</button>
+                  </div>
+                }
+              }
+            </div>
+          }
+
+          <input class="rc-cupon" type="text" placeholder="Inicia sesión para usar cupones" disabled />
+
+          <div class="rc-totales">
+            <div class="rc-totales__row">
+              <span>Subtotal</span>
+              <span>{{ formatearPrecio(carritoService.totalPrecio()) }}</span>
+            </div>
+            <div class="rc-totales__row">
+              <span>Envío</span>
+              @if (envioConfirmado() && metodoEntrega() === 'retiro') {
+                <span class="rc-totales__gratis">Gratis</span>
+              } @else if (envioConfirmado() && metodoEntrega() === 'domicilio') {
+                <span>{{ formatearPrecio(costoEnvio()) }}</span>
+              } @else {
+                <span class="rc-totales__pendiente">Pendiente</span>
+              }
+            </div>
+            <div class="rc-totales__row rc-totales__row--total">
+              <span>Total</span>
+              <span>{{ formatearPrecio(carritoService.totalPrecio() + costoEnvio()) }}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+}

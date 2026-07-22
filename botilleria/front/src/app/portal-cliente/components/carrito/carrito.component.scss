@@ -189,6 +189,23 @@
     }
   }
 
+  &__cotizar-btn {
+    width: 100%;
+    padding: 12px 20px;
+    background: transparent;
+    color: var(--c-primary);
+    border: 1.5px solid var(--c-primary);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    transition: var(--transition);
+    margin-bottom: 8px;
+
+    &:hover {
+      background: color-mix(in srgb, var(--c-primary) 8%, transparent);
+    }
+  }
+
   &__vaciar-btn {
     width: 100%;
     padding: 10px 20px;

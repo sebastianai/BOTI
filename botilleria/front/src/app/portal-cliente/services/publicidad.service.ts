@@ -13,6 +13,7 @@ export interface ItemPublicidad {
   orden: number;
   activo: boolean;
   formato: 'escritorio' | 'movil';
+  categoria_producto: string | null;
   creado_en: string;
 }
 
@@ -29,6 +30,12 @@ export class PublicidadService {
 
   obtenerTodos(): Observable<ItemPublicidad[]> {
     return this.http.get<ItemPublicidad[]>(`${API_URL}/publicidad/todos`);
+  }
+
+  obtenerPorCategoria(categoria: string): Observable<ItemPublicidad[]> {
+    return this.http.get<ItemPublicidad[]>(`${API_URL}/publicidad`, {
+      params: { categoria_producto: categoria, formato: 'escritorio' }
+    }).pipe(catchError(() => of([])));
   }
 
   crear(data: Partial<ItemPublicidad>): Observable<ItemPublicidad> {

@@ -20,7 +20,7 @@ portalConfigRouter.get('/', async (_req, res) => {
 });
 
 portalConfigRouter.put('/', authMiddleware, async (req, res) => {
-  const { nombre_negocio, tagline, descripcion, telefono, email, direccion, color_primario, color_acento, mapa_url } = req.body;
+  const { nombre_negocio, tagline, descripcion, telefono, email, direccion, color_primario, color_acento, mapa_url, instagram_url, facebook_url, nombre_pestana } = req.body;
   try {
     const result = await pool.query(
       `UPDATE diseno_portal SET
@@ -33,10 +33,13 @@ portalConfigRouter.put('/', authMiddleware, async (req, res) => {
         color_primario = COALESCE($7, color_primario),
         color_acento   = COALESCE($8, color_acento),
         mapa_url       = $9,
+        instagram_url  = $10,
+        facebook_url   = $11,
+        nombre_pestana = COALESCE($12, nombre_pestana),
         actualizado_en = NOW()
        WHERE id = 1
        RETURNING *`,
-      [nombre_negocio, tagline, descripcion, telefono, email, direccion, color_primario, color_acento, mapa_url ?? null]
+      [nombre_negocio, tagline, descripcion, telefono, email, direccion, color_primario, color_acento, mapa_url ?? null, instagram_url ?? null, facebook_url ?? null, nombre_pestana]
     );
     res.json(result.rows[0]);
   } catch {

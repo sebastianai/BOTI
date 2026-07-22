@@ -100,12 +100,12 @@ packsRouter.get('/:id', async (req, res) => {
 
 /* ── Crear pack ── */
 packsRouter.post('/', authMiddleware, async (req, res) => {
-  const { nombre, descripcion, activo, orden, producto_ids } = req.body;
+  const { nombre, descripcion, activo, orden, producto_ids, precio } = req.body;
   try {
     const result = await pool.query(
-      `INSERT INTO packs (nombre, descripcion, activo, orden)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [nombre, descripcion ?? null, activo ?? true, orden ?? 0]
+      `INSERT INTO packs (nombre, descripcion, activo, orden, precio)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [nombre, descripcion ?? null, activo ?? true, orden ?? 0, precio ?? 0]
     );
     const pack = result.rows[0];
     const ids: Array<{ producto_id: number; cantidad: number }> = Array.isArray(producto_ids) ? producto_ids : [];
@@ -124,16 +124,17 @@ packsRouter.post('/', authMiddleware, async (req, res) => {
 
 /* ── Actualizar pack ── */
 packsRouter.put('/:id', authMiddleware, async (req, res) => {
-  const { nombre, descripcion, activo, orden, producto_ids } = req.body;
+  const { nombre, descripcion, activo, orden, producto_ids, precio } = req.body;
   try {
     const result = await pool.query(
       `UPDATE packs SET
         nombre      = COALESCE($1, nombre),
         descripcion = $2,
         activo      = COALESCE($3, activo),
-        orden       = COALESCE($4, orden)
-       WHERE id = $5 RETURNING *`,
-      [nombre ?? null, descripcion ?? null, activo ?? null, orden ?? null, req.params.id]
+        orden       = COALESCE($4, orden),
+        precio      = COALESCE($5, precio)
+       WHERE id = $6 RETURNING *`,
+      [nombre ?? null, descripcion ?? null, activo ?? null, orden ?? null, precio ?? null, req.params.id]
     );
     if (!result.rows[0]) { res.status(404).json({ error: 'No encontrado' }); return; }
     if (Array.isArray(producto_ids)) {

@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { PromosService, Promo } from '../../portal-cliente/services/promos.service';
@@ -10,6 +10,9 @@ interface ProductoSimple {
   nombre: string;
   marca: string;
   categoria: string;
+  promocion: string | null;
+  promoId: number | null;
+  promoNombre: string | null;
 }
 
 @Component({
@@ -35,12 +38,26 @@ export class PromosComponent implements OnInit {
   protected readonly busquedaProducto = signal('');
 
   protected readonly form = this.fb.group({
-    nombre:      [''],
-    descripcion: [''],
-    tipo:        ['general'],
-    activo:      [true],
-    orden:       [0],
+    nombre:                [''],
+    descripcion:           [''],
+    tipo:                  ['general'],
+    activo:                [true],
+    orden:                 [0],
+    porcentaje_descuento:  [null as number | null],
   });
+
+  constructor() {
+    this.form.get('tipo')!.valueChanges.subscribe(tipo => {
+      const ctrl = this.form.get('porcentaje_descuento')!;
+      if (tipo === 'descuento') {
+        ctrl.setValidators([Validators.required, Validators.min(1), Validators.max(99)]);
+      } else {
+        ctrl.clearValidators();
+        ctrl.setValue(null, { emitEvent: false });
+      }
+      ctrl.updateValueAndValidity({ emitEvent: false });
+    });
+  }
 
   protected readonly productosFiltrados = computed(() => {
     const q = this.busquedaProducto().toLowerCase().trim();
@@ -54,7 +71,11 @@ export class PromosComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargar();
-    this.http.get<ProductoSimple[]>(`${API_URL}/productos`).subscribe({
+    this.cargarProductos();
+  }
+
+  private cargarProductos(): void {
+    this.http.get<ProductoSimple[]>(`${API_URL}/promos/productos-disponibles`).subscribe({
       next: data => this.productos.set(data)
     });
   }
@@ -71,7 +92,7 @@ export class PromosComponent implements OnInit {
     this.idEditando.set(null);
     this.seleccionados.set(new Set());
     this.busquedaProducto.set('');
-    this.form.reset({ nombre: '', descripcion: '', tipo: 'general', activo: true, orden: this.promos().length });
+    this.form.reset({ nombre: '', descripcion: '', tipo: 'general', activo: true, orden: this.promos().length, porcentaje_descuento: null });
     this.modalAbierto.set(true);
   }
 
@@ -84,7 +105,8 @@ export class PromosComponent implements OnInit {
       descripcion: promo.descripcion ?? '',
       tipo: promo.tipo,
       activo: promo.activo,
-      orden: promo.orden
+      orden: promo.orden,
+      porcentaje_descuento: promo.porcentaje_descuento
     });
     this.modalAbierto.set(true);
   }
@@ -96,9 +118,10 @@ export class PromosComponent implements OnInit {
     }
   }
 
-  protected toggleProducto(id: number): void {
+  protected toggleProducto(p: ProductoSimple): void {
+    if (this.estaBloqueado(p)) return;
     const set = new Set(this.seleccionados());
-    if (set.has(id)) { set.delete(id); } else { set.add(id); }
+    if (set.has(p.id)) { set.delete(p.id); } else { set.add(p.id); }
     this.seleccionados.set(set);
   }
 
@@ -106,7 +129,13 @@ export class PromosComponent implements OnInit {
     return this.seleccionados().has(id);
   }
 
+  /** Un producto está bloqueado si ya pertenece a OTRA promo distinta de la que se está editando. */
+  protected estaBloqueado(p: ProductoSimple): boolean {
+    return p.promoId !== null && p.promoId !== this.idEditando();
+  }
+
   protected guardar(): void {
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     this.guardando.set(true);
     this.errorMsg.set('');
     const id = this.idEditando();
@@ -119,7 +148,12 @@ export class PromosComponent implements OnInit {
       : this.promosService.crear(data as Partial<Promo>);
 
     op.subscribe({
-      next: () => { this.guardando.set(false); this.modalAbierto.set(false); this.cargar(); },
+      next: () => {
+        this.guardando.set(false);
+        this.modalAbierto.set(false);
+        this.cargar();
+        this.cargarProductos();
+      },
       error: err => { this.guardando.set(false); this.errorMsg.set(err?.error?.error || 'Error al guardar'); }
     });
   }
